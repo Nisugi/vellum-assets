@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VellumFE Assets</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body {
+      font: 16px/1.6 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      max-width: 44rem; margin: 3rem auto; padding: 0 1.25rem;
+      background: #0d1117; color: #c9d1d9;
+    }
+    @media (prefers-color-scheme: light) {
+      body { background: #fff; color: #1f2328; }
+      a { color: #0969da; }
+      code { background: #f6f8fa; }
+      .card { border-color: #d0d7de; }
+    }
+    a { color: #58a6ff; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    h1 { font-size: 1.9rem; margin-bottom: .25rem; }
+    .sub { color: #8b949e; margin-top: 0; }
+    code {
+      background: #161b22; padding: .15em .4em; border-radius: 4px;
+      font: .85em ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .cards { display: grid; gap: .9rem; margin: 1.5rem 0; }
+    .card {
+      border: 1px solid #30363d; border-radius: 8px; padding: 1rem 1.2rem;
+    }
+    .card h2 { margin: 0 0 .3rem; font-size: 1.15rem; }
+    .card p { margin: 0; color: #8b949e; font-size: .95rem; }
+    footer { color: #8b949e; font-size: .85rem; margin-top: 2.5rem; }
+  </style>
+</head>
+<body>
+  <h1>VellumFE Assets</h1>
+  <p class="sub">A federated asset repository for
+    <a href="https://github.com/Nisugi/VellumFE">VellumFE</a>, installable in-app
+    with the <code>.jinx</code> asset manager.</p>
+
+  <p>These are served over the Jinx protocol: each category below publishes a
+    <code>manifest.json</code> that VellumFE reads to list and install assets.
+    In VellumFE, just run <code>.jinx list</code> and <code>.jinx install &lt;name&gt;</code>.</p>
+
+  <div class="cards">
+    <div class="card">
+      <h2><a href="icons/manifest.json">Icon maps</a></h2>
+      <p>Hotbar icon sheets. Install one and it drops into your shared icon pool
+        (<code>~/.vellum-fe/global/icons/</code>) next to the rest.</p>
+    </div>
+    <div class="card">
+      <h2><a href="dolls/manifest.json">Injury dolls</a></h2>
+      <p>Paper-doll base images. A skin's <code>[injury_doll]</code> can point at
+        an installed doll.</p>
+    </div>
+    <div class="card">
+      <h2><a href="skins/manifest.json">Skins</a></h2>
+      <p>Full GUI graphics themes (backgrounds, borders, icons), installed as a
+        skin folder you activate with <code>.setskin</code>.</p>
+    </div>
+    <div class="card">
+      <h2><a href="layouts/manifest.json">Layouts</a></h2>
+      <p>Shareable window arrangements and UI packs exported with
+        <code>.uiexport</code>.</p>
+    </div>
+  </div>
+
+  <p>Want to contribute a skin, icon set, or layout? See
+    <a href="SETUP.md">SETUP.md</a> for the folder layout and how the manifests
+    are generated.</p>
+
+  <footer>
+    Built and published automatically by GitHub Actions on every push.
+  </footer>
+</body>
+</html>
