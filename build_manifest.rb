@@ -54,6 +54,8 @@ CATEGORIES = {
   'icons'   => { type: 'iconmap', pack: false, ext: nil },
   # Layouts are prebuilt .vellumpack files (from .uiexport) -> listed as-is.
   'layouts' => { type: 'layout',  pack: false, ext: nil },
+  # Paper dolls are individual PNG files -> listed as-is.
+  'dolls'   => { type: 'doll',    pack: false, ext: nil },
   # Game data files -> listed as-is.
   'data'    => { type: 'data',    pack: false, ext: nil }
 }.freeze
