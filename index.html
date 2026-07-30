@@ -8,14 +8,15 @@
     :root { color-scheme: light dark; }
     body {
       font: 16px/1.6 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-      max-width: 44rem; margin: 3rem auto; padding: 0 1.25rem;
+      max-width: 58rem; margin: 3rem auto; padding: 0 1.25rem;
       background: #0d1117; color: #c9d1d9;
     }
     @media (prefers-color-scheme: light) {
       body { background: #fff; color: #1f2328; }
       a { color: #0969da; }
       code { background: #f6f8fa; }
-      .card { border-color: #d0d7de; }
+      .card, .asset { border-color: #d0d7de; }
+      .asset .thumb { background: #f6f8fa; }
     }
     a { color: #58a6ff; text-decoration: none; }
     a:hover { text-decoration: underline; }
@@ -25,12 +26,31 @@
       background: #161b22; padding: .15em .4em; border-radius: 4px;
       font: .85em ui-monospace, SFMono-Regular, Menlo, monospace;
     }
-    .cards { display: grid; gap: .9rem; margin: 1.5rem 0; }
     .card {
       border: 1px solid #30363d; border-radius: 8px; padding: 1rem 1.2rem;
+      margin: .9rem 0;
     }
-    .card h2 { margin: 0 0 .3rem; font-size: 1.15rem; }
-    .card p { margin: 0; color: #8b949e; font-size: .95rem; }
+    .card h2 { margin: 0 0 .15rem; font-size: 1.15rem; }
+    .card .desc { margin: 0 0 .6rem; color: #8b949e; font-size: .95rem; }
+    .count { color: #8b949e; font-weight: normal; font-size: .85em; }
+    .assets {
+      display: grid; gap: .6rem;
+      grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+    }
+    .asset {
+      display: flex; gap: .7rem; align-items: center;
+      border: 1px solid #30363d; border-radius: 6px; padding: .5rem .6rem;
+    }
+    .asset .thumb {
+      width: 56px; height: 56px; flex: none; border-radius: 4px;
+      background: #161b22; display: flex; align-items: center;
+      justify-content: center; overflow: hidden;
+    }
+    .asset .thumb img { max-width: 100%; max-height: 100%; }
+    .asset .meta { min-width: 0; font-size: .9rem; }
+    .asset .name { font-weight: 600; overflow-wrap: anywhere; }
+    .asset .by { color: #8b949e; font-size: .85em; }
+    .empty { color: #8b949e; font-style: italic; }
     footer { color: #8b949e; font-size: .85rem; margin-top: 2.5rem; }
   </style>
 </head>
@@ -40,39 +60,126 @@
     <a href="https://github.com/Nisugi/VellumFE">VellumFE</a>, installable in-app
     with the <code>.jinx</code> asset manager.</p>
 
-  <p>These are served over the Jinx protocol: each category below publishes a
-    <code>manifest.json</code> that VellumFE reads to list and install assets.
-    In VellumFE, just run <code>.jinx list</code> and <code>.jinx install &lt;name&gt;</code>.</p>
+  <p>Each category below publishes a <code>manifest.json</code> over the Jinx
+    protocol; <a href="repos.json"><code>repos.json</code></a> indexes them all.
+    In VellumFE, just run <code>.jinx list</code> and
+    <code>.jinx install &lt;name&gt;</code>.</p>
 
-  <div class="cards">
-    <div class="card">
-      <h2><a href="icons/manifest.json">Icon maps</a></h2>
-      <p>Hotbar icon sheets. Install one and it drops into your shared icon pool
-        (<code>~/.vellum-fe/global/icons/</code>) next to the rest.</p>
-    </div>
-    <div class="card">
-      <h2><a href="dolls/manifest.json">Injury dolls</a></h2>
-      <p>Paper-doll base images. A skin's <code>[injury_doll]</code> can point at
-        an installed doll.</p>
-    </div>
-    <div class="card">
-      <h2><a href="skins/manifest.json">Skins</a></h2>
-      <p>Full GUI graphics themes (backgrounds, borders, icons), installed as a
-        skin folder you activate with <code>.setskin</code>.</p>
-    </div>
-    <div class="card">
-      <h2><a href="layouts/manifest.json">Layouts</a></h2>
-      <p>Shareable window arrangements and UI packs exported with
-        <code>.uiexport</code>.</p>
-    </div>
+  <p><strong>Contribute:</strong> submit dolls, frames, backgrounds, icon
+    sheets, compass art, or status icons through a
+    <a href="https://github.com/Nisugi/vellum-assets/issues/new/choose">guided
+    submission form</a> — no git required. Skins and layouts go in
+    <a href="https://github.com/Nisugi/vellum-assets/blob/main/SUBMISSIONS.md">by
+    pull request</a>.</p>
+
+  <div id="gallery">
+    <noscript>
+      <p>Manifests: <a href="icons/manifest.json">icons</a> ·
+        <a href="dolls/manifest.json">dolls</a> ·
+        <a href="frames/manifest.json">frames</a> ·
+        <a href="backgrounds/manifest.json">backgrounds</a> ·
+        <a href="compass/manifest.json">compass</a> ·
+        <a href="statusicons/manifest.json">statusicons</a> ·
+        <a href="skins/manifest.json">skins</a> ·
+        <a href="layouts/manifest.json">layouts</a></p>
+    </noscript>
   </div>
-
-  <p>Want to contribute a skin, icon set, or layout? See
-    <a href="SETUP.md">SETUP.md</a> for the folder layout and how the manifests
-    are generated.</p>
 
   <footer>
     Built and published automatically by GitHub Actions on every push.
+    This page reads <code>repos.json</code> and the live manifests, so it is
+    always current.
   </footer>
+
+  <script>
+    const BLURBS = {
+      'vellum-icons': ['Icon maps', 'Hotbar icon sheets, installed into your shared icon pool.'],
+      'vellum-dolls': ['Injury dolls', 'Paper-doll base images for the injury display.'],
+      'vellum-frames': ['Window frames', 'Nine-slice ornamental borders drawn around windows.'],
+      'vellum-backgrounds': ['Window backgrounds', 'Flat textures that sit behind window text.'],
+      'vellum-compass': ['Compass art', 'Compass roses and lit direction overlays.'],
+      'vellum-statusicons': ['Status icons', 'Glyphs for hands, stance, and conditions.'],
+      'vellum-skins': ['Skins', 'Full GUI graphics themes, activated with .setskin.'],
+      'vellum-layouts': ['Layouts', 'Window arrangements and UI packs from .uiexport.'],
+    };
+    const ORDER = Object.keys(BLURBS);
+    const IMG = /\.(png|jpe?g|webp)$/i;
+
+    function el(tag, cls, text) {
+      const n = document.createElement(tag);
+      if (cls) n.className = cls;
+      if (text) n.textContent = text;
+      return n;
+    }
+
+    async function load() {
+      const gallery = document.getElementById('gallery');
+      let repos;
+      try {
+        repos = (await (await fetch('repos.json')).json()).repos;
+      } catch (e) {
+        gallery.appendChild(el('p', 'empty', 'Could not load repos.json.'));
+        return;
+      }
+      repos.sort((a, b) => ORDER.indexOf(a.name) - ORDER.indexOf(b.name));
+      for (const repo of repos) {
+        const path = new URL(repo.url).pathname.split('/').filter(Boolean).pop();
+        const [title, blurb] = BLURBS[repo.name] || [repo.name, ''];
+        const card = el('div', 'card');
+        const h2 = el('h2');
+        const link = el('a', null, title);
+        link.href = path + '/manifest.json';
+        h2.appendChild(link);
+        card.appendChild(h2);
+        if (blurb) card.appendChild(el('p', 'desc', blurb));
+        gallery.appendChild(card);
+        let list;
+        try {
+          list = (await (await fetch(path + '/manifest.json')).json()).available;
+        } catch (e) {
+          card.appendChild(el('p', 'empty', 'Manifest unavailable.'));
+          continue;
+        }
+        h2.appendChild(document.createTextNode(' '));
+        h2.appendChild(el('span', 'count',
+          `${list.length} asset${list.length === 1 ? '' : 's'}`));
+        if (!list.length) {
+          card.appendChild(el('p', 'empty', 'Nothing here yet — be the first to submit!'));
+          continue;
+        }
+        const grid = el('div', 'assets');
+        for (const a of list) {
+          const v = a.vellum || {};
+          const file = a.file.replace(/^\//, '');
+          const tile = el('div', 'asset');
+          const thumb = el('div', 'thumb');
+          if (IMG.test(file)) {
+            const img = el('img');
+            img.loading = 'lazy';
+            img.alt = v.title || file;
+            img.src = path + '/' + file;
+            thumb.appendChild(img);
+          } else {
+            thumb.textContent = '\u{1F4E6}';
+          }
+          tile.appendChild(thumb);
+          const meta = el('div', 'meta');
+          meta.appendChild(el('div', 'name', v.title || file));
+          const bits = [];
+          if (v.author) bits.push('by ' + v.author);
+          if (a.last_commit) {
+            bits.push(new Date(a.last_commit * 1000).toLocaleDateString(
+              undefined, { year: 'numeric', month: 'short', day: 'numeric' }));
+          }
+          if (bits.length) meta.appendChild(el('div', 'by', bits.join(' · ')));
+          if (v.description) meta.appendChild(el('div', 'by', v.description));
+          tile.appendChild(meta);
+          grid.appendChild(tile);
+        }
+        card.appendChild(grid);
+      }
+    }
+    load();
+  </script>
 </body>
 </html>
