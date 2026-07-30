@@ -23,6 +23,9 @@ De-keyed categories expose an optional **Background threshold (advanced)**
 form field (5-80) that overrides the category preset — the tuning loop is:
 inspect the processed images in the PR, edit the issue with a new threshold
 (higher kills halos, lower spares dark detail), and the PR force-updates.
+Images that arrive with meaningful transparency (>=5% fully-transparent
+pixels) are trusted as pre-keyed and left alone — unless a threshold is
+set explicitly, which always forces a re-key.
 
 | Category | Shape | Dekey | Extra required fields |
 |---|---|---|---|

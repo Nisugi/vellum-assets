@@ -148,6 +148,18 @@ def has_alpha(img: Image.Image) -> bool:
     return img.getchannel("A").getextrema()[0] < 255
 
 
+def is_prekeyed(img: Image.Image) -> bool:
+    """True when the image already carries MEANINGFUL transparency.
+
+    A genuinely keyed image has a substantial transparent background. A
+    handful of stray transparent pixels (an export artifact — seen in the
+    wild at 0.4%) must NOT count, or the submission silently skips keying
+    and no threshold can ever fix it.
+    """
+    alpha = np.asarray(img.getchannel("A"))
+    return float((alpha == 0).mean()) >= 0.05
+
+
 def process_image(img: Image.Image, cfg: dict, label: str) -> Image.Image:
     if cfg.get("opaque"):
         if has_alpha(img):
@@ -156,8 +168,9 @@ def process_image(img: Image.Image, cfg: dict, label: str) -> Image.Image:
         return img
     if cfg["dekey"] is None:
         return img
-    if has_alpha(img):
-        # Already carries real transparency — trust it, don't re-key.
+    if is_prekeyed(img) and not cfg.get("force_dekey"):
+        # Already meaningfully transparent — trust it. An explicit
+        # threshold from the form overrides this and re-keys anyway.
         return img
     seeds = []
     if cfg.get("seed_center"):
@@ -306,7 +319,7 @@ def main() -> int:
         if not 5 <= t <= 80:
             raise Reject(f"Background threshold must be between 5 and 80 "
                          f"(got {t}).")
-        cfg = dict(cfg, dekey=t)
+        cfg = dict(cfg, dekey=t, force_dekey=True)
     if not fields.get("author", "").strip():
         raise Reject("Author credit is required.")
     name = slugify(fields.get("name", ""))
