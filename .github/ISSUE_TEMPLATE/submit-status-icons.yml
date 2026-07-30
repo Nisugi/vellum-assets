@@ -44,3 +44,11 @@ body:
       description: Drag and drop one .zip here.
     validations:
       required: true
+  - type: input
+    id: threshold
+    attributes:
+      label: Background threshold (advanced)
+      description: >-
+        Leave blank normally. If the processed results show a dark halo, edit this to a
+        higher value like 40 and the submission re-runs; if dark details get erased,
+        lower it. Applies to every image in the zip.

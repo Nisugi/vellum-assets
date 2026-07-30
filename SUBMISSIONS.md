@@ -19,6 +19,11 @@ Nothing publishes without a human merging that PR. Rejections are posted as
 issue comments; the submitter edits the issue and it re-processes
 automatically.
 
+De-keyed categories expose an optional **Background threshold (advanced)**
+form field (5-80) that overrides the category preset — the tuning loop is:
+inspect the processed images in the PR, edit the issue with a new threshold
+(higher kills halos, lower spares dark detail), and the PR force-updates.
+
 | Category | Shape | Dekey | Extra required fields |
 |---|---|---|---|
 | `dolls/` | single image | threshold 30 | — |

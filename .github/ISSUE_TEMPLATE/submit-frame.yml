@@ -57,3 +57,11 @@ body:
       description: Drag and drop your frame here.
     validations:
       required: true
+  - type: input
+    id: threshold
+    attributes:
+      label: Background threshold (advanced)
+      description: >-
+        Leave blank normally (frames default to a gentle 12 so near-black metalwork
+        survives). If the processed result shows leftover background, edit this higher
+        and the submission re-runs; if dark seams in the art get erased, lower it.

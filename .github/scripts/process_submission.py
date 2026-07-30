@@ -69,6 +69,7 @@ FIELD_MAP = {
     "cell size (px)": "cell",
     "corner cap size (px)": "slice",
     "on-screen scale": "scale",
+    "background threshold (advanced)": "threshold",
 }
 
 ATTACHMENT_URL = re.compile(
@@ -212,6 +213,19 @@ def main() -> int:
     cat_dir = REPO_ROOT / category
 
     fields = parse_issue_form(body)
+
+    # Optional dekey tuning: submitters retry by editing the issue with a
+    # different threshold (higher kills halos, lower spares dark detail).
+    if fields.get("threshold", "").strip():
+        if cfg["dekey"] is None:
+            raise Reject("This category doesn't use background removal, so "
+                         "the threshold field does nothing — clear it.")
+        t = require_number(fields, "threshold", int,
+                           "Background threshold (advanced)")
+        if not 5 <= t <= 80:
+            raise Reject(f"Background threshold must be between 5 and 80 "
+                         f"(got {t}).")
+        cfg = dict(cfg, dekey=t)
     if not fields.get("author", "").strip():
         raise Reject("Author credit is required.")
     name = slugify(fields.get("name", ""))
