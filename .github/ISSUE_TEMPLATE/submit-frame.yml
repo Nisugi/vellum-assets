@@ -24,10 +24,11 @@ body:
     id: slice
     attributes:
       label: Corner cap size (px)
-      description: Measured size of the corner caps in source pixels — the renderer's nine-slice inset.
-      placeholder: "310"
-    validations:
-      required: true
+      description: >-
+        Optional — leave blank and it's measured automatically from your image.
+        To override: the size of the smallest square, anchored at a canvas corner, that
+        fully contains the corner ornament (measured from the canvas edge inward).
+      placeholder: leave blank to auto-measure
   - type: input
     id: scale
     attributes:

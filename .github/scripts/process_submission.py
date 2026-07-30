@@ -25,6 +25,7 @@ import sys
 import zipfile
 from pathlib import Path
 
+import numpy as np
 import requests
 from PIL import Image
 
@@ -51,7 +52,7 @@ CATEGORIES = {
     "dolls":       dict(kind="single", dekey=30),
     "icons":       dict(kind="single", dekey=None, require=["cell"]),
     "frames":      dict(kind="single", dekey=12, seed_center=True,
-                        require=["slice"]),
+                        measure_slice=True),
     "backgrounds": dict(kind="single", dekey=None, opaque=True),
     "compass":     dict(kind="set", dekey=30, roles=COMPASS_ROLES),
     "statusicons": dict(kind="set", dekey=30, roles=STATUS_ROLES),
@@ -167,6 +168,84 @@ def process_image(img: Image.Image, cfg: dict, label: str) -> Image.Image:
                      "solid black.")
 
 
+def measure_slice(img: Image.Image) -> int:
+    """Estimate a frame's nine-slice inset from its alpha channel.
+
+    The inset is the side of the smallest corner-anchored square that
+    contains the corner ornament. Caps announce themselves two ways, and
+    either alone can undersell them (the iron frame's brass caps stop
+    bulging past the run depth well before the brass itself ends):
+
+    - silhouette: opaque art reaching deeper than the runs' steady depth
+    - appearance: the band's color differing from the run material
+
+    Along each edge we take the extent of both signals out from each
+    corner. A cap's depth from THIS edge shows up as its extent along
+    the ADJACENT edge, so four edge scans cover every corner fully.
+    """
+    arr = np.asarray(img).astype(np.int32)
+    views = [arr, arr[::-1], arr.transpose(1, 0, 2),
+             arr.transpose(1, 0, 2)[::-1]]  # top / bottom / left / right
+    best = 0
+    run_depths = []
+    for v in views:
+        limit = v.shape[0] // 2
+        opaque = v[:limit, :, 3] > 8
+        # Per position along the edge: how deep opaque art extends inward.
+        depth = np.where(opaque.any(axis=0),
+                         limit - np.argmax(opaque[::-1], axis=0), 0)
+        n = depth.size
+        third = slice(n // 3, 2 * n // 3)
+        run = float(np.median(depth[third]))
+        run_depths.append(run)
+        bulge = run * 1.15 + 2
+        # Mean color of the band strip at each position, vs mid-run norm.
+        band = max(int(run), 1)
+        colmean = v[:band, :, :3].mean(axis=0)
+        ref = np.median(colmean[third], axis=0)
+        dist = np.abs(colmean - ref).sum(axis=1)
+        # Run texture (rivets, grain) sets the noise floor.
+        cthresh = max(float(np.percentile(dist[third], 95)) * 1.6, 40.0)
+        half = n // 2
+        # A cap is a SUSTAINED exceedance from the corner outward; stray
+        # blemishes mid-run (single rivets, glint artifacts) must not
+        # drag the extent out. Rolling-mean the mask so only regions
+        # mostly above threshold count.
+        w_len = max(8, n // 100)
+        kernel = np.ones(w_len) / w_len
+
+        def extent(corner, thresh, adaptive):
+            for _ in range(2):
+                sustained = np.convolve((corner > thresh).astype(float),
+                                        kernel, mode="same") >= 0.5
+                past = np.nonzero(sustained)[0]
+                if not past.size:
+                    return 0
+                e = int(past.max()) + 1
+                if not adaptive:
+                    return e
+                # Re-threshold at a fraction of the cap's own contrast so
+                # a strong cap's faint gradient tail doesn't count.
+                adaptive = False
+                new = max(thresh, 0.3 * float(corner[:e].max()))
+                if new <= thresh * 1.01:
+                    return e
+                thresh = new
+            return e
+
+        # depth is saturated near corners by the perpendicular side band,
+        # so peak-relative thresholding only suits the color profile.
+        for profile, thresh, adaptive in ((depth, bulge, False),
+                                          (dist, cthresh, True)):
+            for corner in (profile[:half], profile[half:][::-1]):
+                best = max(best, extent(corner, thresh, adaptive))
+    if best == 0:
+        # No distinct caps — a uniform band; the inset is the band itself.
+        best = int(max(run_depths))
+    best = int(best * 1.02) + 1  # small safety margin; oversize is harmless
+    return max(1, min(best, min(img.size) // 2 - 1))
+
+
 def toml_str(value: str) -> str:
     return '"' + value.replace("\\", "\\\\").replace('"', '\\"') + '"'
 
@@ -239,9 +318,12 @@ def main() -> int:
     extra = {}
     if "cell" in cfg.get("require", ()):
         extra["cell"] = require_number(fields, "cell", int, "Cell size (px)")
-    if "slice" in cfg.get("require", ()):
-        extra["slice"] = require_number(fields, "slice", int,
-                                        "Corner cap size (px)")
+    if cfg.get("measure_slice"):
+        # Cap size is auto-measured from the alpha channel when blank;
+        # a filled-in value is an explicit override.
+        if fields.get("slice", "").strip():
+            extra["slice"] = require_number(fields, "slice", int,
+                                            "Corner cap size (px)")
         if fields.get("scale", "").strip():
             extra["scale"] = require_number(fields, "scale", float,
                                             "On-screen scale")
@@ -255,10 +337,16 @@ def main() -> int:
         if target.exists():
             raise Reject(f"The name `{name}` is already taken in "
                          f"`{category}/` — pick another and edit the issue.")
+        note = f"{img.width}x{img.height}"
+        if cfg.get("measure_slice"):
+            if "slice" not in extra:
+                extra["slice"] = measure_slice(img)
+                note += f", cap {extra['slice']}px (auto-measured)"
+            else:
+                note += f", cap {extra['slice']}px"
         img.save(target)
         write_sidecar(cat_dir / f"{name}.toml", fields, extra)
-        written.append((f"{category}/{name}.png",
-                        f"{img.width}x{img.height}"))
+        written.append((f"{category}/{name}.png", note))
     else:
         data = download(urls[0])
         try:

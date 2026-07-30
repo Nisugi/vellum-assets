@@ -28,7 +28,7 @@ inspect the processed images in the PR, edit the issue with a new threshold
 |---|---|---|---|
 | `dolls/` | single image | threshold 30 | — |
 | `icons/` | single sheet | none (opaque) | cell size |
-| `frames/` | single image | threshold 12 + center seed | corner cap size (nine-slice inset) |
+| `frames/` | single image | threshold 12 + center seed | cap size auto-measured from alpha+color profiles; form field overrides |
 | `backgrounds/` | single image | none — must be opaque | — |
 | `compass/` | zip → `<set>_<role>.png` | threshold 30 | role vocabulary: rose, n, ne, e, se, s, sw, w, nw, up, down, out |
 | `statusicons/` | zip → `<set>_<role>.png` | threshold 30 | role vocabulary: 16 glyph names (see template) |
