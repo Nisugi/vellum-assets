@@ -52,7 +52,15 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -B "$branch"
-          git add -A dolls icons frames backgrounds compass statusicons
+          # Add everything the processor wrote — .gitignore keeps generated
+          # files out. (A hardcoded category list here once silently broke
+          # the first new category added after it.)
+          git add -A .
+          if git diff --cached --quiet; then
+            gh issue comment "$ISSUE_NUMBER" --body \
+              "Processing succeeded but produced no changes — these files already exist with identical content."
+            exit 0
+          fi
           git commit -m "Asset submission from #${ISSUE_NUMBER}"
           git push -f origin "$branch"
           gh pr create --base main --head "$branch" \
