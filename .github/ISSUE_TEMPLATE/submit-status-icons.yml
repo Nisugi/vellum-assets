@@ -1,0 +1,46 @@
+name: Submit status icons
+description: Status glyph set (zip of one or more images)
+title: "[Status] "
+labels: ["submission", "category:statusicons"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Attach **one .zip** containing your glyphs. Each file must be named for its role —
+        either `<role>.png` or `<anything>_<role>.png`. Roles:
+        `lefthand` `righthand` `spellhand` `standing` `kneeling` `sitting` `prone` `dead`
+        `stunned` `bleeding` `hidden` `invisible` `webbed` `poisoned` `diseased` `joined`.
+        A partial set is fine. Each glyph should be a single bold pictogram readable at
+        20px. Solid black backgrounds are made transparent automatically. Your files will
+        be published as `<set name>_<role>.png`.
+  - type: input
+    id: name
+    attributes:
+      label: Set name
+      description: Lowercase letters, numbers, `_` and `-` only. Prefixes every file in the set.
+      placeholder: inkline
+    validations:
+      required: true
+  - type: input
+    id: author
+    attributes:
+      label: Author credit
+      description: Shown in the gallery.
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+  - type: input
+    id: tags
+    attributes:
+      label: Tags
+      description: Comma-separated.
+  - type: textarea
+    id: image
+    attributes:
+      label: Image set (zip)
+      description: Drag and drop one .zip here.
+    validations:
+      required: true

@@ -1,0 +1,44 @@
+name: Submit an injury doll
+description: A full-body character image for the injury doll (single image, solid black background)
+title: "[Doll] "
+labels: ["submission", "category:dolls"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Requirements:** front-facing, standing straight, arms slightly away from the torso,
+        both hands and feet visible, both eyes unobstructed, full figure inside the frame,
+        roughly 3:4 portrait, **solid pure black background** (we turn it transparent
+        automatically). See [GEMINI_PROMPTS.md](../blob/main/GEMINI_PROMPTS.md) for the full
+        art direction. If your image already has real transparency, that's fine too.
+  - type: input
+    id: name
+    attributes:
+      label: Asset name
+      description: "Lowercase letters, numbers, `_` and `-` only. Convention: `{race}` or `{race}_{class}`."
+      placeholder: elf_wizard
+    validations:
+      required: true
+  - type: input
+    id: author
+    attributes:
+      label: Author credit
+      description: Shown in the gallery.
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+  - type: input
+    id: tags
+    attributes:
+      label: Tags
+      description: Comma-separated, e.g. `elf, wizard`
+  - type: textarea
+    id: image
+    attributes:
+      label: Image
+      description: Drag and drop your PNG/JPEG/WebP here.
+    validations:
+      required: true

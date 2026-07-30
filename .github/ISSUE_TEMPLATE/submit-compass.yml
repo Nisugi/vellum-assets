@@ -1,0 +1,46 @@
+name: Submit compass art
+description: Compass rose and/or direction overlays (zip of one or more images)
+title: "[Compass] "
+labels: ["submission", "category:compass"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Attach **one .zip** containing your images. Each file must be named for its role —
+        either `<role>.png` or `<anything>_<role>.png`. Roles:
+        `rose` (the base), `n` `ne` `e` `se` `s` `sw` `w` `nw` (lit pointers),
+        `up` `down` (chevrons), `out` (the hub).
+        A partial set is fine (e.g. just a rose). Overlays must be registered pixel-perfect
+        against the rose — they're stacked at runtime. Solid black backgrounds are made
+        transparent automatically. Your files will be published as `<set name>_<role>.png`.
+  - type: input
+    id: name
+    attributes:
+      label: Set name
+      description: Lowercase letters, numbers, `_` and `-` only. Prefixes every file in the set.
+      placeholder: emberiron
+    validations:
+      required: true
+  - type: input
+    id: author
+    attributes:
+      label: Author credit
+      description: Shown in the gallery.
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+  - type: input
+    id: tags
+    attributes:
+      label: Tags
+      description: Comma-separated.
+  - type: textarea
+    id: image
+    attributes:
+      label: Image set (zip)
+      description: Drag and drop one .zip here.
+    validations:
+      required: true

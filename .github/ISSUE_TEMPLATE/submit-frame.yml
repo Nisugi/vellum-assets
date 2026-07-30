@@ -1,0 +1,59 @@
+name: Submit a window frame
+description: A nine-slice ornamental window border (single image)
+title: "[Frame] "
+labels: ["submission", "category:frames"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Requirements:** the frame band runs flush to all four canvas edges with uniform
+        thickness; corner ornament stays inside the corner squares; the straight runs between
+        corners are continuous uniform material (they get stretched); the center is **pure
+        black** (we make it transparent automatically — if your image already has a
+        transparent center, that works too). Check the inner corners at full zoom for
+        stray artifacts before submitting.
+  - type: input
+    id: name
+    attributes:
+      label: Asset name
+      description: Lowercase letters, numbers, `_` and `-` only.
+      placeholder: brass
+    validations:
+      required: true
+  - type: input
+    id: slice
+    attributes:
+      label: Corner cap size (px)
+      description: Measured size of the corner caps in source pixels — the renderer's nine-slice inset.
+      placeholder: "310"
+    validations:
+      required: true
+  - type: input
+    id: scale
+    attributes:
+      label: On-screen scale
+      description: "Optional. Scale factor that brings the caps to a sane on-screen thickness (e.g. `0.045` for a 2048px source)."
+      placeholder: "0.045"
+  - type: input
+    id: author
+    attributes:
+      label: Author credit
+      description: Shown in the gallery.
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+  - type: input
+    id: tags
+    attributes:
+      label: Tags
+      description: Comma-separated, e.g. `iron, dark`
+  - type: textarea
+    id: image
+    attributes:
+      label: Image
+      description: Drag and drop your frame here.
+    validations:
+      required: true

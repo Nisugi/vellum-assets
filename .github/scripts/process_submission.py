@@ -1,0 +1,323 @@
+#!/usr/bin/env python3
+"""Process a community asset submission issue into repo files.
+
+Runs in GitHub Actions on issues labeled `submission` + `category:<x>`.
+Reads the issue-form body from $ISSUE_BODY, downloads the attached image
+(or zip, for set categories), validates it, de-keys the black background
+where the category calls for it, and writes the finished PNG(s) plus a
+gallery sidecar <name>.toml into the category folder. The workflow then
+commits the result to a branch and opens a PR — this script never touches
+git.
+
+Exit 0: files written; summary in $SUBMISSION_OUT/submission_summary.md
+        and PR title in $SUBMISSION_OUT/submission_title.txt.
+Exit 1: rejected; reason in $SUBMISSION_OUT/submission_error.md.
+
+Everything in the issue body is untrusted input: names are sanitized to a
+strict slug before they touch a path, attachment URLs must live on GitHub's
+own domains, and images are decoded under a pixel cap.
+"""
+
+import io
+import os
+import re
+import sys
+import zipfile
+from pathlib import Path
+
+import requests
+from PIL import Image
+
+REPO_ROOT = Path(os.environ.get("REPO_ROOT", ".")).resolve()
+sys.path.insert(0, str(REPO_ROOT))
+from dekey import dekey  # noqa: E402  (repo-root import by design)
+
+OUT_DIR = Path(os.environ.get("SUBMISSION_OUT", "."))
+
+# Decompression-bomb guard: PIL raises before allocating anything huge.
+Image.MAX_IMAGE_PIXELS = 40_000_000
+MAX_DOWNLOAD_BYTES = 25 * 1024 * 1024
+MAX_DIMENSION = 6000
+
+COMPASS_ROLES = frozenset(
+    "rose n ne e se s sw w nw up down out".split())
+STATUS_ROLES = frozenset(
+    "lefthand righthand spellhand standing kneeling sitting prone dead "
+    "stunned bleeding hidden invisible webbed poisoned diseased joined".split())
+
+# kind: 'single' (one image -> <name>.png) or 'set' (zip -> <name>_<role>.png
+# per entry). dekey: flood threshold, or None to keep the image as-is.
+CATEGORIES = {
+    "dolls":       dict(kind="single", dekey=30),
+    "icons":       dict(kind="single", dekey=None, require=["cell"]),
+    "frames":      dict(kind="single", dekey=12, seed_center=True,
+                        require=["slice"]),
+    "backgrounds": dict(kind="single", dekey=None, opaque=True),
+    "compass":     dict(kind="set", dekey=30, roles=COMPASS_ROLES),
+    "statusicons": dict(kind="set", dekey=30, roles=STATUS_ROLES),
+}
+
+# Issue-form heading -> field key. Headings must match the templates.
+FIELD_MAP = {
+    "asset name": "name",
+    "set name": "name",
+    "author credit": "author",
+    "description": "description",
+    "tags": "tags",
+    "image": "image",
+    "image set (zip)": "image",
+    "cell size (px)": "cell",
+    "corner cap size (px)": "slice",
+    "on-screen scale": "scale",
+}
+
+ATTACHMENT_URL = re.compile(
+    r"https://(?:github\.com/user-attachments/(?:assets|files)/[^\s)\"'<>]+"
+    r"|[A-Za-z0-9.-]+\.githubusercontent\.com/[^\s)\"'<>]+)")
+
+NAME_RE = re.compile(r"\A[a-z0-9][a-z0-9_-]{0,39}\Z")
+
+
+class Reject(Exception):
+    """Submission is invalid; the message is shown to the submitter."""
+
+
+def parse_issue_form(body: str) -> dict:
+    """Issue forms render as '### <Heading>\n\n<value>' blocks."""
+    fields = {}
+    current = None
+    lines = []
+    for line in body.splitlines():
+        m = re.match(r"###\s+(.*)", line)
+        if m:
+            if current:
+                fields[current] = "\n".join(lines).strip()
+            current = FIELD_MAP.get(m.group(1).strip().lower())
+            lines = []
+        elif current:
+            lines.append(line)
+    if current:
+        fields[current] = "\n".join(lines).strip()
+    return {k: "" if v == "_No response_" else v for k, v in fields.items()}
+
+
+def slugify(raw: str) -> str:
+    slug = re.sub(r"[\s]+", "_", raw.strip().lower())
+    slug = re.sub(r"[^a-z0-9_-]", "", slug)
+    if not NAME_RE.match(slug):
+        raise Reject(
+            f"`{raw}` isn't a usable name. Use 1-40 characters: lowercase "
+            "letters, numbers, `_` or `-`, starting with a letter or number.")
+    return slug
+
+
+def download(url: str) -> bytes:
+    resp = requests.get(url, timeout=60, stream=True,
+                        headers={"User-Agent": "vellum-assets-submission"})
+    resp.raise_for_status()
+    data = b""
+    for chunk in resp.iter_content(1024 * 256):
+        data += chunk
+        if len(data) > MAX_DOWNLOAD_BYTES:
+            raise Reject(f"Attachment exceeds "
+                         f"{MAX_DOWNLOAD_BYTES // (1024 * 1024)} MB.")
+    return data
+
+
+def decode_image(data: bytes, label: str) -> Image.Image:
+    try:
+        img = Image.open(io.BytesIO(data))
+        img.load()
+    except Exception:
+        raise Reject(f"`{label}` could not be read as an image "
+                     "(PNG, JPEG, or WebP).")
+    if img.format not in ("PNG", "JPEG", "WEBP"):
+        raise Reject(f"`{label}` is {img.format or 'unknown'}; "
+                     "submit PNG, JPEG, or WebP.")
+    if img.width > MAX_DIMENSION or img.height > MAX_DIMENSION:
+        raise Reject(f"`{label}` is {img.width}x{img.height}; "
+                     f"the limit is {MAX_DIMENSION}px per side.")
+    return img.convert("RGBA")
+
+
+def has_alpha(img: Image.Image) -> bool:
+    return img.getchannel("A").getextrema()[0] < 255
+
+
+def process_image(img: Image.Image, cfg: dict, label: str) -> Image.Image:
+    if cfg.get("opaque"):
+        if has_alpha(img):
+            raise Reject(f"`{label}`: backgrounds must be fully opaque — "
+                         "no transparency.")
+        return img
+    if cfg["dekey"] is None:
+        return img
+    if has_alpha(img):
+        # Already carries real transparency — trust it, don't re-key.
+        return img
+    seeds = []
+    if cfg.get("seed_center"):
+        seeds = [(img.width // 2, img.height // 2)]
+    try:
+        return dekey(img, cfg["dekey"], seeds)
+    except SystemExit as e:
+        raise Reject(f"`{label}`: de-keying failed ({e}). Frames need a "
+                     "pure-black center pocket; check the background is "
+                     "solid black.")
+
+
+def toml_str(value: str) -> str:
+    return '"' + value.replace("\\", "\\\\").replace('"', '\\"') + '"'
+
+
+def write_sidecar(path: Path, fields: dict, extra: dict) -> None:
+    lines = []
+    if fields.get("title"):
+        lines.append(f"title       = {toml_str(fields['title'])}")
+    if fields.get("author"):
+        lines.append(f"author      = {toml_str(fields['author'])}")
+    if fields.get("description"):
+        desc = " ".join(fields["description"].split())
+        lines.append(f"description = {toml_str(desc)}")
+    tags = [t.strip().lower() for t in fields.get("tags", "").split(",")
+            if t.strip()]
+    if tags:
+        lines.append("tags        = ["
+                     + ", ".join(toml_str(t) for t in tags) + "]")
+    for key, value in extra.items():
+        lines.append(f"{key} = {value}")
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def require_number(fields: dict, key: str, kind, what: str):
+    raw = fields.get(key, "").strip()
+    try:
+        return kind(raw)
+    except ValueError:
+        raise Reject(f"{what} is required and must be a number "
+                     f"(got `{raw or 'nothing'}`).")
+
+
+def main() -> int:
+    body = os.environ["ISSUE_BODY"]
+    issue = os.environ["ISSUE_NUMBER"]
+    labels = os.environ.get("ISSUE_LABELS", "").split(",")
+
+    category = next((l.removeprefix("category:") for l in labels
+                     if l.startswith("category:")), None)
+    if category not in CATEGORIES:
+        raise Reject("No `category:<name>` label found — submit through one "
+                     "of the issue templates rather than a blank issue.")
+    cfg = CATEGORIES[category]
+    cat_dir = REPO_ROOT / category
+
+    fields = parse_issue_form(body)
+    if not fields.get("author", "").strip():
+        raise Reject("Author credit is required.")
+    name = slugify(fields.get("name", ""))
+    fields["title"] = fields.get("name", "").strip()
+
+    urls = ATTACHMENT_URL.findall(fields.get("image", ""))
+    if not urls:
+        raise Reject("No attachment found in the Image field. Drag and drop "
+                     "the file into that text box so GitHub uploads it.")
+
+    extra = {}
+    if "cell" in cfg.get("require", ()):
+        extra["cell"] = require_number(fields, "cell", int, "Cell size (px)")
+    if "slice" in cfg.get("require", ()):
+        extra["slice"] = require_number(fields, "slice", int,
+                                        "Corner cap size (px)")
+        if fields.get("scale", "").strip():
+            extra["scale"] = require_number(fields, "scale", float,
+                                            "On-screen scale")
+
+    written = []  # (relative path, note)
+
+    if cfg["kind"] == "single":
+        data = download(urls[0])
+        img = process_image(decode_image(data, name), cfg, name)
+        target = cat_dir / f"{name}.png"
+        if target.exists():
+            raise Reject(f"The name `{name}` is already taken in "
+                         f"`{category}/` — pick another and edit the issue.")
+        img.save(target)
+        write_sidecar(cat_dir / f"{name}.toml", fields, extra)
+        written.append((f"{category}/{name}.png",
+                        f"{img.width}x{img.height}"))
+    else:
+        data = download(urls[0])
+        try:
+            zf = zipfile.ZipFile(io.BytesIO(data))
+        except zipfile.BadZipFile:
+            raise Reject("Set submissions must be a single .zip attachment.")
+        outputs = {}  # role -> Image
+        for info in zf.infolist():
+            base = os.path.basename(info.filename)
+            if (info.is_dir() or not base or base.startswith(".")
+                    or "__MACOSX" in info.filename):
+                continue
+            stem = os.path.splitext(base)[0].lower()
+            role = stem if stem in cfg["roles"] else stem.rsplit("_", 1)[-1]
+            if role not in cfg["roles"]:
+                raise Reject(
+                    f"`{base}` doesn't match any {category} role. Files must "
+                    f"be named `<role>.png` or `<anything>_<role>.png` where "
+                    f"role is one of: {', '.join(sorted(cfg['roles']))}.")
+            if role in outputs:
+                raise Reject(f"The zip contains two files for role `{role}`.")
+            if info.file_size > MAX_DOWNLOAD_BYTES:
+                raise Reject(f"`{base}` exceeds the size limit.")
+            img = decode_image(zf.read(info), base)
+            outputs[role] = process_image(img, cfg, base)
+        if not outputs:
+            raise Reject("The zip contained no usable images.")
+        conflicts = [f"{name}_{r}.png" for r in outputs
+                     if (cat_dir / f"{name}_{r}.png").exists()]
+        if conflicts:
+            raise Reject("These names are already taken in "
+                         f"`{category}/`: {', '.join(sorted(conflicts))} — "
+                         "pick another set name and edit the issue.")
+        for role, img in sorted(outputs.items()):
+            img.save(cat_dir / f"{name}_{role}.png")
+            role_fields = dict(fields, title=f"{fields['title']} ({role})")
+            write_sidecar(cat_dir / f"{name}_{role}.toml", role_fields, extra)
+            written.append((f"{category}/{name}_{role}.png",
+                            f"{img.width}x{img.height}"))
+
+    summary = [
+        f"Processed submission from #{issue} — **{fields['title']}** "
+        f"by {fields['author']} (`{category}`).",
+        "",
+        "| File | Size |",
+        "|---|---|",
+        *[f"| `{p}` | {note} |" for p, note in written],
+        "",
+        "Review the images in the Files tab, then merge to publish.",
+        "",
+        f"Closes #{issue}",
+    ]
+    (OUT_DIR / "submission_summary.md").write_text(
+        "\n".join(summary), encoding="utf-8")
+    (OUT_DIR / "submission_title.txt").write_text(
+        f"Submission: {category}/{name} (#{issue})\n", encoding="utf-8")
+    print(f"wrote {len(written)} file(s)")
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except Reject as e:
+        (OUT_DIR / "submission_error.md").write_text(
+            f"**Submission rejected:** {e}\n\nEdit this issue to fix the "
+            "problem and it will be re-processed automatically.",
+            encoding="utf-8")
+        print(f"rejected: {e}", file=sys.stderr)
+        sys.exit(1)
+    except Exception as e:  # noqa: BLE001 — always leave a comment behind
+        (OUT_DIR / "submission_error.md").write_text(
+            f"**Processing failed unexpectedly** ({type(e).__name__}). A "
+            "maintainer will take a look; you don't need to do anything.",
+            encoding="utf-8")
+        raise

@@ -56,6 +56,14 @@ CATEGORIES = {
   'layouts' => { type: 'layout',  pack: false, ext: nil },
   # Paper dolls are individual PNG files -> listed as-is.
   'dolls'   => { type: 'doll',    pack: false, ext: nil },
+  # Status glyph pool: individual PNGs named <set>_<glyph>.png.
+  'statusicons' => { type: 'statusicon', pack: false, ext: nil },
+  # Compass element pool: individual PNGs named <set>_<role>.png.
+  'compass' => { type: 'compass', pack: false, ext: nil },
+  # Window frames (nine-slice): single PNGs, slice/scale in sidecar toml.
+  'frames'  => { type: 'frame',   pack: false, ext: nil },
+  # Window background textures: opaque single PNGs.
+  'backgrounds' => { type: 'background', pack: false, ext: nil },
   # Game data files -> listed as-is.
   'data'    => { type: 'data',    pack: false, ext: nil }
 }.freeze
@@ -167,6 +175,8 @@ def read_meta_toml(path)
         raw[1..-2]
       elsif raw.match?(/\A-?\d+\z/)
         raw.to_i
+      elsif raw.match?(/\A-?\d+\.\d+\z/)
+        raw.to_f
       else
         raw
       end
@@ -183,6 +193,10 @@ def vellum_block(meta, category_type)
   block['version']     = meta['version']     if meta['version']
   block['tags']        = Array(meta['tags']) if meta['tags']
   block['preview']     = meta['preview']     if meta['preview']
+  # Rendering metadata for single-file assets that need it (sheets, frames).
+  block['cell']        = meta['cell']        if meta['cell']
+  block['slice']       = meta['slice']       if meta['slice']
+  block['scale']       = meta['scale']       if meta['scale']
   block['category']    = category_type       # inferred, always present
   block.empty? ? nil : block
 end
@@ -240,20 +254,26 @@ def build_category(root, category, config, base_url)
       File.binwrite(File.join(cat_dir, file_name), bytes)
     end
   else
-    # Single-file assets: list each file as-is.
+    # Single-file assets: list each file as-is. A sidecar <name>.toml (written
+    # by the submission pipeline) supplies gallery/render metadata.
     Dir.children(cat_dir).sort.each do |name|
-      next if IGNORED.include?(name) || name.end_with?('.json')
+      next if IGNORED.include?(name) || name.end_with?('.json', '.toml')
 
       path = File.join(cat_dir, name)
       next unless File.file?(path)
 
+      meta = read_meta_toml(File.join(cat_dir, "#{File.basename(name, '.*')}.toml"))
+
       # Relative to this category's base URL — no category prefix (see above).
-      available << {
+      entry = {
         'file'        => "/#{name}",
         'type'        => config[:type],
         'md5'         => digest_b64(File.binread(path)),
         'last_commit' => last_commit(path)
       }
+      vb = vellum_block(meta, config[:type])
+      entry['vellum'] = vb if vb
+      available << entry
     end
   end
 

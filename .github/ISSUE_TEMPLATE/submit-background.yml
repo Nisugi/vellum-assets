@@ -1,0 +1,44 @@
+name: Submit a window background
+description: A flat texture that sits behind window text (single opaque image)
+title: "[Background] "
+labels: ["submission", "category:backgrounds"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Requirements:** perfectly uniform lighting — no vignette, no hotspot, no focal
+        detail anywhere (windows crop at arbitrary aspect ratios, so composition must not
+        matter). Very low contrast; the client's scrim handles text readability. Must be
+        **fully opaque** — backgrounds are not de-keyed. Landscape orientation, generously
+        sized.
+  - type: input
+    id: name
+    attributes:
+      label: Asset name
+      description: Lowercase letters, numbers, `_` and `-` only.
+      placeholder: dark_leather
+    validations:
+      required: true
+  - type: input
+    id: author
+    attributes:
+      label: Author credit
+      description: Shown in the gallery.
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+  - type: input
+    id: tags
+    attributes:
+      label: Tags
+      description: Comma-separated, e.g. `leather, dark`
+  - type: textarea
+    id: image
+    attributes:
+      label: Image
+      description: Drag and drop your texture here.
+    validations:
+      required: true

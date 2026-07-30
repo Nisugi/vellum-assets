@@ -1,0 +1,69 @@
+name: Process asset submission
+
+on:
+  issues:
+    types: [opened, edited]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+# One run per issue at a time; a re-edit supersedes the in-flight run.
+concurrency:
+  group: submission-${{ github.event.issue.number }}
+  cancel-in-progress: true
+
+jobs:
+  process:
+    if: contains(github.event.issue.labels.*.name, 'submission')
+    runs-on: ubuntu-latest
+    env:
+      ISSUE_NUMBER: ${{ github.event.issue.number }}
+      GH_TOKEN: ${{ github.token }}
+      SUBMISSION_OUT: ${{ runner.temp }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install pillow requests
+
+      - name: Process submission
+        id: process
+        # Body/labels flow in via env, never through the shell — issue
+        # content is untrusted input.
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_LABELS: ${{ join(github.event.issue.labels.*.name, ',') }}
+        run: |
+          set +e
+          python .github/scripts/process_submission.py
+          echo "result=$?" >> "$GITHUB_OUTPUT"
+
+      - name: Open pull request
+        if: steps.process.outputs.result == '0'
+        run: |
+          set -euo pipefail
+          branch="submission/issue-${ISSUE_NUMBER}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$branch"
+          git add -A dolls icons frames backgrounds compass statusicons
+          git commit -m "Asset submission from #${ISSUE_NUMBER}"
+          git push -f origin "$branch"
+          gh pr create --base main --head "$branch" \
+              --title "$(head -1 "$SUBMISSION_OUT/submission_title.txt")" \
+              --body-file "$SUBMISSION_OUT/submission_summary.md" \
+            || gh pr edit "$branch" --body-file "$SUBMISSION_OUT/submission_summary.md"
+          gh issue comment "$ISSUE_NUMBER" --body-file "$SUBMISSION_OUT/submission_summary.md"
+
+      - name: Report rejection
+        if: steps.process.outputs.result != '0'
+        run: |
+          if [ -f "$SUBMISSION_OUT/submission_error.md" ]; then
+            gh issue comment "$ISSUE_NUMBER" --body-file "$SUBMISSION_OUT/submission_error.md"
+          else
+            gh issue comment "$ISSUE_NUMBER" --body "Processing failed unexpectedly — a maintainer will check the Action log."
+          fi
+          exit 1
