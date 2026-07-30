@@ -1,17 +1,16 @@
-name: Submit status icons
-description: Status glyph set (zip of one or more images)
-title: "[Status] "
-labels: ["submission", "category:statusicons"]
+name: Submit hand icons
+description: Left, right, and spell hand icons for the hands widget (zip of one or more images)
+title: "[Hands] "
+labels: ["submission", "category:hands"]
 body:
   - type: markdown
     attributes:
       value: |
-        Attach **one .zip** containing your glyphs. Each file must be named for its role —
-        either `<role>.png` or `<anything>_<role>.png`. Roles:
-        `standing` `kneeling` `sitting` `prone` `dead` `stunned` `bleeding` `hidden`
-        `invisible` `webbed` `poisoned` `diseased` `joined`.
-        (Hand icons have their own submission form.)
-        A partial set is fine. Each glyph should be a single bold pictogram readable at
+        Attach **one .zip** containing your hand icons. Each file must be named for its
+        role — either `<role>.png` or `<anything>_<role>.png`. Roles:
+        `lefthand` (open left hand), `righthand` (open right hand), `spellhand` (hand with
+        a rune circle above the palm).
+        A partial set is fine. Each icon should be a single bold pictogram readable at
         20px. Solid black backgrounds are made transparent automatically. Your files will
         be published as `<set name>_<role>.png`.
   - type: input

@@ -43,8 +43,9 @@ MAX_DIMENSION = 6000
 COMPASS_ROLES = frozenset(
     "rose n ne e se s sw w nw up down out".split())
 STATUS_ROLES = frozenset(
-    "lefthand righthand spellhand standing kneeling sitting prone dead "
-    "stunned bleeding hidden invisible webbed poisoned diseased joined".split())
+    "standing kneeling sitting prone dead stunned bleeding hidden "
+    "invisible webbed poisoned diseased joined".split())
+HAND_ROLES = frozenset("lefthand righthand spellhand".split())
 
 # kind: 'single' (one image -> <name>.png) or 'set' (zip -> <name>_<role>.png
 # per entry). dekey: flood threshold, or None to keep the image as-is.
@@ -56,6 +57,7 @@ CATEGORIES = {
     "backgrounds": dict(kind="single", dekey=None, opaque=True),
     "compass":     dict(kind="set", dekey=30, roles=COMPASS_ROLES),
     "statusicons": dict(kind="set", dekey=30, roles=STATUS_ROLES),
+    "hands":       dict(kind="set", dekey=30, roles=HAND_ROLES),
 }
 
 # Issue-form heading -> field key. Headings must match the templates.

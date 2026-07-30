@@ -62,6 +62,8 @@ CATEGORIES = {
   'dolls'   => { type: 'doll',    pack: false, ext: nil, pool: 'dolls' },
   # Status glyph pool: individual PNGs named <set>_<glyph>.png.
   'statusicons' => { type: 'statusicon', pack: false, ext: nil, pool: 'statusicons' },
+  # Hand icons (left/right/spell) for the hands widget: <set>_<hand>.png.
+  'hands'   => { type: 'hand',    pack: false, ext: nil, pool: 'hands' },
   # Compass element pool: individual PNGs named <set>_<role>.png.
   'compass' => { type: 'compass', pack: false, ext: nil, pool: 'compass' },
   # Window frames (nine-slice): single PNGs, slice/scale in sidecar toml.
