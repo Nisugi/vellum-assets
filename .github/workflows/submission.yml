@@ -2,7 +2,7 @@ name: Process asset submission
 
 on:
   issues:
-    types: [opened, edited]
+    types: [opened, edited, labeled]
 
 permissions:
   contents: write
@@ -18,10 +18,12 @@ jobs:
   process:
     if: contains(github.event.issue.labels.*.name, 'submission')
     runs-on: ubuntu-latest
+    # NOTE: the `runner` context is not valid in job-level env — putting
+    # ${{ runner.temp }} here invalidates the whole workflow file. Steps
+    # use the $RUNNER_TEMP default variable instead.
     env:
       ISSUE_NUMBER: ${{ github.event.issue.number }}
       GH_TOKEN: ${{ github.token }}
-      SUBMISSION_OUT: ${{ runner.temp }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -38,6 +40,7 @@ jobs:
           ISSUE_LABELS: ${{ join(github.event.issue.labels.*.name, ',') }}
         run: |
           set +e
+          export SUBMISSION_OUT="$RUNNER_TEMP"
           python .github/scripts/process_submission.py
           echo "result=$?" >> "$GITHUB_OUTPUT"
 
@@ -53,16 +56,16 @@ jobs:
           git commit -m "Asset submission from #${ISSUE_NUMBER}"
           git push -f origin "$branch"
           gh pr create --base main --head "$branch" \
-              --title "$(head -1 "$SUBMISSION_OUT/submission_title.txt")" \
-              --body-file "$SUBMISSION_OUT/submission_summary.md" \
-            || gh pr edit "$branch" --body-file "$SUBMISSION_OUT/submission_summary.md"
-          gh issue comment "$ISSUE_NUMBER" --body-file "$SUBMISSION_OUT/submission_summary.md"
+              --title "$(head -1 "$RUNNER_TEMP/submission_title.txt")" \
+              --body-file "$RUNNER_TEMP/submission_summary.md" \
+            || gh pr edit "$branch" --body-file "$RUNNER_TEMP/submission_summary.md"
+          gh issue comment "$ISSUE_NUMBER" --body-file "$RUNNER_TEMP/submission_summary.md"
 
       - name: Report rejection
         if: steps.process.outputs.result != '0'
         run: |
-          if [ -f "$SUBMISSION_OUT/submission_error.md" ]; then
-            gh issue comment "$ISSUE_NUMBER" --body-file "$SUBMISSION_OUT/submission_error.md"
+          if [ -f "$RUNNER_TEMP/submission_error.md" ]; then
+            gh issue comment "$ISSUE_NUMBER" --body-file "$RUNNER_TEMP/submission_error.md"
           else
             gh issue comment "$ISSUE_NUMBER" --body "Processing failed unexpectedly — a maintainer will check the Action log."
           fi
