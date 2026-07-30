@@ -47,23 +47,27 @@ require 'optparse'
 #
 # `pack: true`  -> the asset is a directory zipped into <name>.vellumpack
 # `pack: false` -> each file in the folder is its own single-file asset
+# `pool:`       -> shared-image-pool folder the client installs into
+#                  (global/images/<pool>/); emitted as vellum.pool so NEW
+#                  categories install with no client release. Directory-safe
+#                  names only ([a-z0-9_-], <=32 chars) or the client ignores it.
 CATEGORIES = {
   # Skins are folders (skin.toml + art) -> zipped to <name>.vellumpack.
   'skins'   => { type: 'skin',    pack: true,  ext: '.vellumpack' },
   # Icon maps are individual PNG files -> listed as-is (each one installable).
-  'icons'   => { type: 'iconmap', pack: false, ext: nil },
+  'icons'   => { type: 'iconmap', pack: false, ext: nil, pool: 'icons' },
   # Layouts are prebuilt .vellumpack files (from .uiexport) -> listed as-is.
   'layouts' => { type: 'layout',  pack: false, ext: nil },
   # Paper dolls are individual PNG files -> listed as-is.
-  'dolls'   => { type: 'doll',    pack: false, ext: nil },
+  'dolls'   => { type: 'doll',    pack: false, ext: nil, pool: 'dolls' },
   # Status glyph pool: individual PNGs named <set>_<glyph>.png.
-  'statusicons' => { type: 'statusicon', pack: false, ext: nil },
+  'statusicons' => { type: 'statusicon', pack: false, ext: nil, pool: 'statusicons' },
   # Compass element pool: individual PNGs named <set>_<role>.png.
-  'compass' => { type: 'compass', pack: false, ext: nil },
+  'compass' => { type: 'compass', pack: false, ext: nil, pool: 'compass' },
   # Window frames (nine-slice): single PNGs, slice/scale in sidecar toml.
-  'frames'  => { type: 'frame',   pack: false, ext: nil },
+  'frames'  => { type: 'frame',   pack: false, ext: nil, pool: 'frames' },
   # Window background textures: opaque single PNGs.
-  'backgrounds' => { type: 'background', pack: false, ext: nil },
+  'backgrounds' => { type: 'background', pack: false, ext: nil, pool: 'backgrounds' },
   # Game data files -> listed as-is.
   'data'    => { type: 'data',    pack: false, ext: nil }
 }.freeze
@@ -185,7 +189,7 @@ def read_meta_toml(path)
 end
 
 # --- vellum:{} block from meta.toml -----------------------------------------
-def vellum_block(meta, category_type)
+def vellum_block(meta, category_type, pool = nil)
   block = {}
   block['title']       = meta['title']       if meta['title']
   block['author']      = meta['author']      if meta['author']
@@ -198,6 +202,10 @@ def vellum_block(meta, category_type)
   block['slice']       = meta['slice']       if meta['slice']
   block['scale']       = meta['scale']       if meta['scale']
   block['category']    = category_type       # inferred, always present
+  # Shared-image-pool folder: the client installs the file into
+  # global/images/<pool>/ from this tag alone, so a new category here needs
+  # no client release.
+  block['pool']        = pool                if pool
   block.empty? ? nil : block
 end
 
@@ -271,7 +279,7 @@ def build_category(root, category, config, base_url)
         'md5'         => digest_b64(File.binread(path)),
         'last_commit' => last_commit(path)
       }
-      vb = vellum_block(meta, config[:type])
+      vb = vellum_block(meta, config[:type], config[:pool])
       entry['vellum'] = vb if vb
       available << entry
     end
@@ -283,13 +291,27 @@ def build_category(root, category, config, base_url)
   [out_path, available.size]
 end
 
+# --- Discovery index --------------------------------------------------------
+# repos.json at the monorepo root lists every category present as its own
+# Jinx repo. The VellumFE client merges it (add-only) on top of its
+# compiled-in seeds, so a new category folder here reaches every client
+# without a release on their side.
+def write_repos_index(root, base_url)
+  repos = CATEGORIES.keys.select { |c| Dir.exist?(File.join(root, c)) }.sort.map do |c|
+    { 'name' => "vellum-#{c}", 'url' => "#{base_url}/#{c}" }
+  end
+  path = File.join(root, 'repos.json')
+  File.write(path, JSON.pretty_generate({ 'repos' => repos }) + "\n")
+  [path, repos.size]
+end
+
 # --- CLI --------------------------------------------------------------------
 def main
   options = { root: '.', base_url: 'https://nisugi.github.io/vellum-assets' }
   OptionParser.new do |o|
     o.banner = 'Usage: ruby build_manifest.rb [--root DIR] [--base-url URL]'
     o.on('--root DIR', 'monorepo root (default: .)') { |v| options[:root] = v }
-    o.on('--base-url URL', 'Pages base url (informational)') { |v| options[:base_url] = v }
+    o.on('--base-url URL', 'Pages base url (repos.json entries)') { |v| options[:base_url] = v }
   end.parse!
 
   root = File.expand_path(options[:root])
@@ -302,6 +324,8 @@ def main
     puts "wrote #{out_path} (#{count} asset#{count == 1 ? '' : 's'})"
     total += count
   end
+  index_path, repo_count = write_repos_index(root, options[:base_url])
+  puts "wrote #{index_path} (#{repo_count} repo#{repo_count == 1 ? '' : 's'})"
   puts "done: #{total} asset#{total == 1 ? '' : 's'} across #{CATEGORIES.size} categories"
 end
 
