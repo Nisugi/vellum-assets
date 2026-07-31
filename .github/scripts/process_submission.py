@@ -73,6 +73,8 @@ FIELD_MAP = {
     "corner cap size (px)": "slice",
     "on-screen scale": "scale",
     "background threshold (advanced)": "threshold",
+    "image or zip": "image",
+    "role (single image only)": "role",
 }
 
 ATTACHMENT_URL = re.compile(
@@ -364,42 +366,66 @@ def main() -> int:
         written.append((f"{category}/{name}.png", note))
     else:
         data = download(urls[0])
-        try:
+        # out_stem -> (Image, display title)
+        outputs = {}
+
+        def add_output(stem_prefix, role, img):
+            out = f"{stem_prefix}_{role}"
+            if out in outputs:
+                raise Reject(f"Two files would both publish as `{out}.png`.")
+            outputs[out] = (img, f"{stem_prefix} ({role})")
+
+        if data[:4] == b"PK\x03\x04":
             zf = zipfile.ZipFile(io.BytesIO(data))
-        except zipfile.BadZipFile:
-            raise Reject("Set submissions must be a single .zip attachment.")
-        outputs = {}  # role -> Image
-        for info in zf.infolist():
-            base = os.path.basename(info.filename)
-            if (info.is_dir() or not base or base.startswith(".")
-                    or "__MACOSX" in info.filename):
-                continue
-            stem = os.path.splitext(base)[0].lower()
-            role = stem if stem in cfg["roles"] else stem.rsplit("_", 1)[-1]
+            for info in zf.infolist():
+                base = os.path.basename(info.filename)
+                if (info.is_dir() or not base or base.startswith(".")
+                        or "__MACOSX" in info.filename):
+                    continue
+                stem = os.path.splitext(base)[0].lower()
+                if stem in cfg["roles"]:
+                    # Bare role name -> the form's set name is the prefix.
+                    prefix, role = name, stem
+                else:
+                    # Prefixed entries keep their own prefix, so one zip can
+                    # carry many differently-named assets of the same role
+                    # (e.g. ember_spellhand.png + frost_spellhand.png).
+                    prefix, _, role = stem.rpartition("_")
+                    if role not in cfg["roles"] or not prefix:
+                        raise Reject(
+                            f"`{base}` doesn't match any {category} role. "
+                            f"Files must be named `<role>.png` or "
+                            f"`<anything>_<role>.png` where role is one of: "
+                            f"{', '.join(sorted(cfg['roles']))}.")
+                    prefix = slugify(prefix)
+                if info.file_size > MAX_DOWNLOAD_BYTES:
+                    raise Reject(f"`{base}` exceeds the size limit.")
+                img = decode_image(zf.read(info), base)
+                add_output(prefix, role, process_image(img, cfg, base))
+            if not outputs:
+                raise Reject("The zip contained no usable images.")
+        else:
+            # Single bare image: the Role dropdown says what it is.
+            role = fields.get("role", "").strip().lower()
             if role not in cfg["roles"]:
                 raise Reject(
-                    f"`{base}` doesn't match any {category} role. Files must "
-                    f"be named `<role>.png` or `<anything>_<role>.png` where "
-                    f"role is one of: {', '.join(sorted(cfg['roles']))}.")
-            if role in outputs:
-                raise Reject(f"The zip contains two files for role `{role}`.")
-            if info.file_size > MAX_DOWNLOAD_BYTES:
-                raise Reject(f"`{base}` exceeds the size limit.")
-            img = decode_image(zf.read(info), base)
-            outputs[role] = process_image(img, cfg, base)
-        if not outputs:
-            raise Reject("The zip contained no usable images.")
-        conflicts = [f"{name}_{r}.png" for r in outputs
-                     if (cat_dir / f"{name}_{r}.png").exists()]
+                    "For a single-image submission, pick the file's role in "
+                    "the **Role** dropdown (or attach a .zip of "
+                    "`<anything>_<role>.png` files instead).")
+            img = decode_image(data, name)
+            add_output(name, role, process_image(img, cfg, name))
+
+        conflicts = [f"{out}.png" for out in outputs
+                     if (cat_dir / f"{out}.png").exists()]
         if conflicts:
             raise Reject("These names are already taken in "
                          f"`{category}/`: {', '.join(sorted(conflicts))} — "
-                         "pick another set name and edit the issue.")
-        for role, img in sorted(outputs.items()):
-            img.save(cat_dir / f"{name}_{role}.png")
-            role_fields = dict(fields, title=f"{fields['title']} ({role})")
-            write_sidecar(cat_dir / f"{name}_{role}.toml", role_fields, extra)
-            written.append((f"{category}/{name}_{role}.png",
+                         "rename and edit the issue.")
+        for out, (img, title) in sorted(outputs.items()):
+            img.save(cat_dir / f"{out}.png")
+            write_sidecar(cat_dir / f"{out}.toml",
+                          dict(fields, title=title), extra)
+            written.append((f"{category}/{out}.png",
                             f"{img.width}x{img.height}"))
 
     summary = [

@@ -6,13 +6,14 @@ body:
   - type: markdown
     attributes:
       value: |
-        Attach **one .zip** containing your hand icons. Each file must be named for its
-        role — either `<role>.png` or `<anything>_<role>.png`. Roles:
+        Attach **a single image** (and pick its role below) or **one .zip** of images.
+        Zip entries are named for their role — `<role>.png` uses your set name as prefix;
+        `<anything>_<role>.png` keeps its own prefix, so one zip can carry many
+        differently-named icons of the same role. Roles:
         `lefthand` (open left hand), `righthand` (open right hand), `spellhand` (hand with
         a rune circle above the palm).
         A partial set is fine. Each icon should be a single bold pictogram readable at
-        20px. Solid black backgrounds are made transparent automatically. Your files will
-        be published as `<set name>_<role>.png`.
+        20px. Solid black backgrounds are made transparent automatically.
   - type: input
     id: name
     attributes:
@@ -40,10 +41,19 @@ body:
   - type: textarea
     id: image
     attributes:
-      label: Image set (zip)
-      description: Drag and drop one .zip here.
+      label: Image or zip
+      description: Drag and drop a single image or one .zip here.
     validations:
       required: true
+  - type: dropdown
+    id: role
+    attributes:
+      label: Role (single image only)
+      description: When attaching one image instead of a zip, pick what it is.
+      options:
+        - lefthand
+        - righthand
+        - spellhand
   - type: input
     id: threshold
     attributes:

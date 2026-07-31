@@ -33,9 +33,14 @@ set explicitly, which always forces a re-key.
 | `icons/` | single sheet | none (opaque) | cell size |
 | `frames/` | single image | threshold 12 + center seed | cap size auto-measured from alpha+color profiles; form field overrides |
 | `backgrounds/` | single image | none — must be opaque | — |
-| `compass/` | zip → `<set>_<role>.png` | threshold 30 | role vocabulary: rose, n, ne, e, se, s, sw, w, nw, up, down, out |
-| `statusicons/` | zip → `<set>_<role>.png` | threshold 30 | role vocabulary: 13 glyph names (see template) |
-| `hands/` | zip → `<set>_<role>.png` | threshold 30 | role vocabulary: lefthand, righthand, spellhand |
+| `compass/` | image or zip → `<prefix>_<role>.png` | threshold 30 | role vocabulary: rose, n, ne, e, se, s, sw, w, nw, up, down, out |
+| `statusicons/` | image or zip → `<prefix>_<role>.png` | threshold 30 | role vocabulary: 13 glyph names (see template) |
+| `hands/` | image or zip → `<prefix>_<role>.png` | threshold 30 | role vocabulary: lefthand, righthand, spellhand |
+
+Set categories accept a single bare image (role picked via form dropdown) or
+a zip. Zip entries named `<role>.png` take the form's set name as prefix;
+entries named `<anything>_<role>.png` keep their own prefix, so one zip can
+carry many differently-named assets of the same role.
 
 Deliberately deferred: injury-doll severity overlays (84 images per doll —
 see GEMINI_PROMPTS.md), and a Discord bot entry point that would open PRs
