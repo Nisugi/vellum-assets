@@ -1,0 +1,123 @@
+# StealthBlue - stealth's structure recolored to a cyan-blue scheme.
+[meta]
+name = "StealthBlue"
+description = "Curated from Wrayth's stealthblue skin"
+
+# Editor/menu palette. Cyan-blue accent on a dark ground (matching how stealth
+# is structured, but blue). Chrome text light; accent drives titles/selection.
+[ui]
+window_bg = "#0a0e14"
+panel_bg = "#0f1620"
+menu_bg = "#0a0e14"
+button_bg = "#14202c"
+button_hover = "#1c3242"
+text = "#cdd6e0"
+accent = "#00a8d8"
+border = "#183040"
+# Title caption on the dark titlebar art reads well in the cyan accent.
+titlebar_text = "#00a8d8"
+
+[window.default.background]
+image = "bg/mesh.png"
+fit = "tile"
+
+[window.default.border]
+image = "frames/border.png"
+slice = [4.0, 4.0, 4.0, 4.0]
+
+[icons]
+lefthand = "icons/lefthand.png"
+righthand = "icons/righthand.png"
+spellhand = "icons/spellhand.png"
+standing = "icons/standing.png"
+kneeling = "icons/kneeling.png"
+sitting = "icons/sitting.png"
+prone = "icons/prone.png"
+joined = "icons/joined.png"
+dead = "icons/dead.png"
+stunned = "icons/stunned.png"
+bleeding = "icons/bleeding.png"
+webbed = "icons/webbed.png"
+poisoned = "icons/poisoned.png"
+diseased = "icons/diseased.png"
+# Combat icon buttons (image name -> sprite; case-insensitive).
+swordbtn = "icons/swordbtn.png"
+shieldbtn = "icons/shieldbtn.png"
+noswordbtn = "icons/noswordbtn.png"
+noshieldbtn = "icons/noshieldbtn.png"
+# Title-bar close button sprite.
+titlebar_close = "icons/titlebar_close.png"
+
+[compass]
+rose = "compass/rose.png"
+n = "compass/n.png"
+s = "compass/s.png"
+e = "compass/e.png"
+w = "compass/w.png"
+ne = "compass/ne.png"
+nw = "compass/nw.png"
+se = "compass/se.png"
+sw = "compass/sw.png"
+up = "compass/up.png"
+down = "compass/down.png"
+out = "compass/out.png"
+
+# ---- Interactive dialog-panel controls ------------------------------------
+# Nine-slice button background (1px bevel border, dark fill). state variants:
+# button / button.hover / button.pressed.
+[controls.button]
+image = "controls/button.png"
+slice = [2.0, 2.0, 2.0, 2.0]
+scale = 1.0
+
+[controls."button.hover"]
+image = "controls/button_hover.png"
+slice = [2.0, 2.0, 2.0, 2.0]
+scale = 1.0
+
+# Progress bars stay unskinned (theme-colored), matching storm + stealth.
+
+# Tabs: bevel like a button; the active tab uses the brighter variant so the
+# selected tab reads as lit.
+[controls.tab]
+image = "controls/button.png"
+slice = [2.0, 2.0, 2.0, 2.0]
+scale = 1.0
+
+[controls."tab.active"]
+image = "controls/button_hover.png"
+slice = [2.0, 2.0, 2.0, 2.0]
+scale = 1.0
+
+# Title bar sprite band (nine-slice), matched to the 194x20 art like stealth:
+# top=13 solid band, right=38 caption/close backing fixed, bottom=0 (notch to
+# edge), left=2 border. Keeps the >> cutout revealing the mesh.
+[controls.titlebar]
+image = "frames/titlebar.png"
+slice = [13.0, 38.0, 0.0, 2.0]
+scale = 1.0
+
+[injury_doll]
+base = "doll/base.png"
+
+[injury_doll.dots]
+wound_color = "#e02020"
+scar_color = "#f0a020"
+opacity = 0.9
+diameter = 0.065
+
+[injury_doll.anchors]
+abdomen = [0.5068, 0.3807]
+back = [0.1534, 0.8161]
+chest = [0.5008, 0.2458]
+head = [0.5008, 0.0435]
+leftarm = [0.7465, 0.3102]
+lefteye = [0.8243, 0.0404]
+lefthand = [0.8543, 0.4788]
+leftleg = [0.6087, 0.6229]
+neck = [0.4949, 0.1385]
+nsys = [0.8543, 0.7977]
+rightarm = [0.2672, 0.3133]
+righteye = [0.1774, 0.0466]
+righthand = [0.1474, 0.4758]
+rightleg = [0.393, 0.6658]

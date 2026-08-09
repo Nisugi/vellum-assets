@@ -1,0 +1,196 @@
+# Storm - curated from Wrayth's StormFront (storm.skn) via the skn extractor.
+# Cool steel-blue scheme: dark blue mesh, steel title bars, light chrome text.
+# Activate with:  .setskin storm
+#
+# Brought to stealth-parity: full window frame (window.png nine-slice with the
+# integrated blue title bar), [ui] chrome palette, mesh background, controls.
+#
+# CURATOR TODO (in-app tools):
+#  1. Injury doll: Settings > Appearance > Skin > "Calibrate injury doll" to
+#     place anchors on doll/base.png (has R/L limb labels baked in).
+#  2. Compass: rose.png is the ring; author per-direction overlays if desired.
+
+[meta]
+name = "Storm"
+description = "Curated from Wrayth's StormFront skin"
+
+# ---- UI chrome palette ----------------------------------------------------
+# Colors the menus, editors, titles, tabs, buttons — NOT game content text
+# (story/spells/room keep the theme's colors). Steel-blue on dark blue.
+[ui]
+window_bg = "#0a1622"   # dark blue window/menu surface
+panel_bg = "#0f2233"    # inset/panel surface (a hair lighter)
+menu_bg = "#0a1622"     # dropdowns / context menus
+button_bg = "#16293b"   # resting button surface
+button_hover = "#20405c"
+text = "#c8d4e2"        # UI chrome text — light steel (NOT an accent color)
+accent = "#3f83c8"      # steel-blue highlight — selection, active tab
+border = "#2a3f56"      # subtle steel border/separator stroke
+# Title-bar caption sits on the SILVER title bar art, so it needs dark text to
+# stay readable — not the steel-blue accent (which vanishes on silver).
+titlebar_text = "#1a2430"
+# Combat/dialog button labels sit on the light SILVER button art, so dark.
+button_text = "#1a2028"
+
+# ---- Window background (mesh) ---------------------------------------------
+[window.default.background]
+image = "bg/panel.png"
+fit = "tile"
+
+[window.map.background]
+image = "bg/map.png"
+fit = "cover"
+opacity = 1.0
+
+# ---- Window frame (nine-slice) --------------------------------------------
+# StormFront uses SEPARATE pieces (not one monolithic window sprite): a THIN
+# body border (clientBorder, 8x8 grey ring) + a title-bar sprite on top. This
+# keeps the body border thin — the earlier monolithic window.png forced a fat
+# ~96px right border to protect its baked-in buttons, padding every window.
+[window.default.border]
+image = "frames/client.png"
+slice = [3.0, 3.0, 3.0, 3.0]
+scale = 1.0
+
+# ---- Title bar sprite (nine-slice band on top of the window) ---------------
+# panel.png is StormFront's panel title bar: silver plate + the filigree
+# flourish already flowing around the 2 blue buttons on the right, plus a
+# bottom notch — all in one 28px canvas (no compositing needed). The grey
+# plate stretches; the right slice fixes the flourish + buttons; the bottom
+# notch reveals the window mesh. Buttons are decorative (hide via menu).
+[controls.titlebar]
+image = "frames/panel.png"
+slice = [13.0, 50.0, 0.0, 8.0]
+scale = 1.0
+
+# ---- Right-edge flourish (per-edge overlay) -------------------------------
+# StormFront edges the window's right side with a thin vertical border strip
+# (vertical.png, 3x716, tiled down the edge) topped by a filigree flourish
+# (flourish.png = panelFrameUnder, 20x34) anchored at the top corner — the
+# ornament that flows from the title bar into the body. Painted over the
+# nine-slice body border along the right edge.
+[edges.right]
+strip = "frames/vertical.png"
+tile = true
+ornament = "frames/flourish.png"
+anchor = "start"
+thickness = 3.0
+scale = 1.0
+
+# ---- Named frames (right-click a window > Appearance > Skin frame) ---------
+[frames.storm-client]
+image = "frames/client.png"
+slice = [3.0, 3.0, 3.0, 3.0]
+scale = 1.0
+
+[frames.storm-window]
+image = "frames/window.png"
+slice = [17.0, 3.0, 3.0, 4.0]
+scale = 1.0
+
+[frames.storm-panel]
+image = "frames/panel.png"
+slice = [13.0, 8.0, 6.0, 8.0]
+scale = 1.0
+
+# ---- Controls (buttons) ---------------------------------------------------
+# button.png is StormFront's plain rounded command button (81x16, subtle grey
+# gradient) — a clean surface that text reads over, unlike the busy title-bar
+# strip. Small slice keeps the rounded end-caps while the middle stretches.
+[controls.button]
+image = "controls/button.png"
+slice = [4.0, 6.0, 4.0, 6.0]
+scale = 1.0
+
+[controls."button.hover"]
+image = "controls/button_alt.png"
+slice = [4.0, 6.0, 4.0, 6.0]
+scale = 1.0
+
+# Dropdown box (the ▼ combo). Its presence also enables the skinned OPEN
+# popup styling (fill/stroke now derive from the [ui] palette, not a
+# hardcoded orange). Small 12x12 box art, tiny slice for the border.
+[controls.dropdown]
+image = "controls/dropdown.png"
+slice = [3.0, 3.0, 3.0, 3.0]
+scale = 1.0
+
+# ---- Hands + combat icon buttons ------------------------------------------
+# Icon names are matched case-insensitively against the game's dialog XML
+# (name='SwordBtn' etc.). Combat buttons are the 29x29 weapon/shield-ready
+# sprites; sword_in / shield_down carry the red "no" overlay (sheathed).
+[icons]
+lefthand = "icons/lefthand.png"
+righthand = "icons/righthand.png"
+spellhand = "icons/spellhand.png"
+swordbtn = "icons/swordbtn.png"
+noswordbtn = "icons/noswordbtn.png"
+shieldbtn = "icons/shieldbtn.png"
+noshieldbtn = "icons/noshieldbtn.png"
+# Posture status icons, cut from StormFront's icons.png strip (black bg made
+# transparent). Resolved by indicator id; unmatched ids fall back to vectors.
+standing = "icons/standing.png"
+kneeling = "icons/kneeling.png"
+sitting = "icons/sitting.png"
+prone = "icons/prone.png"
+dead = "icons/dead.png"
+# Status-effect icons, cut from status_sample.png (each cell held two: a splash
+# and a drop). Ids are best-guess from color/shape — verify live and remap.
+poisoned = "icons/poisoned.png"   # green splash
+diseased = "icons/diseased.png"   # green teardrop
+bleeding = "icons/bleeding.png"   # red teardrop
+stunned = "icons/stunned.png"     # yellow !
+# Figure-state indicators (cropped from status_sample cells 2-4).
+hidden = "icons/hidden.png"       # dim figure
+invisible = "icons/invisible.png" # outline-only figure
+joined = "icons/joined.png"       # two figures (grouped)
+
+# ---- Compass --------------------------------------------------------------
+# rose = the unlit ring; per-direction overlays light the available exits.
+# The overlays were cut from Wrayth's _cardinal / _diagonal / _updown
+# composite art (each a 103x62 canvas, one arrow lit, transparent elsewhere).
+[compass]
+rose = "compass/rose.png"
+n = "compass/n.png"
+ne = "compass/ne.png"
+e = "compass/e.png"
+se = "compass/se.png"
+s = "compass/s.png"
+sw = "compass/sw.png"
+w = "compass/w.png"
+nw = "compass/nw.png"
+up = "compass/up.png"
+down = "compass/down.png"
+out = "compass/out.png"
+
+# ---- Injury doll ----------------------------------------------------------
+[injury_doll]
+base = "doll/base.png"
+
+[injury_doll.dots]
+wound_color = "#e02020"
+scar_color = "#b8b8b8"
+opacity = 0.9
+diameter = 0.07
+
+# The nsys (nervous system) part ships full-canvas overlays in this skin:
+[injury_doll.nsys]
+injury1 = "doll/nerves1.png"
+injury2 = "doll/nerves2.png"
+injury3 = "doll/nerves3.png"
+
+[injury_doll.anchors]
+abdomen = [0.5447, 0.3347]
+back = [0.0627, 0.9203]
+chest = [0.5322, 0.2182]
+head = [0.5197, 0.0404]
+leftarm = [0.7763, 0.2857]
+lefteye = [0.8827, 0.0282]
+lefthand = [0.939, 0.5064]
+leftleg = [0.7074, 0.6689]
+neck = [0.5322, 0.1232]
+nsys = [0.9202, 0.859]
+rightarm = [0.3006, 0.2949]
+righteye = [0.1817, 0.0282]
+righthand = [0.1754, 0.5034]
+rightleg = [0.3757, 0.6781]

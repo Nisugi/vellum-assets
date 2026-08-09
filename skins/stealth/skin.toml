@@ -1,0 +1,133 @@
+# Stealth v2 - fixed hands (content-split) + compass (full-canvas lit overlays).
+[meta]
+name = "Stealth"
+description = "Curated from Wrayth's dark stealth skin"
+
+# Editor/menu palette. StealthFront look: black surfaces, LIGHT body text,
+# orange only as the accent (titles, headings, selection, active tab). Body
+# text must stay readable/light — orange everywhere is wrong; the Wrayth menus
+# use white/grey text with orange highlights only.
+[ui]
+window_bg = "#000000"   # WindowColor
+panel_bg = "#0a0a0a"    # PanelColor (a hair off black so surfaces read apart)
+menu_bg = "#000000"     # dropdowns / context menus
+button_bg = "#141414"   # resting button surface over black
+button_hover = "#24201a"
+text = "#e8933a"        # UI CHROME text (menu/editor labels, headings) — orange.
+                        # Game content windows pin their own theme text color,
+                        # so this never bleeds onto story/spells/room text.
+accent = "#e8933a"      # orange highlight — titles, selection, active tab
+# Wrayth's stealth menu has NO visible border/separator lines — flat black.
+# Keep the border near-black so strokes recede instead of drawing lines.
+border = "#141414"
+
+[window.default.background]
+image = "bg/mesh.png"
+fit = "tile"
+
+[window.default.border]
+image = "frames/border.png"
+slice = [4.0, 4.0, 4.0, 4.0]
+
+[icons]
+lefthand = "icons/lefthand.png"
+righthand = "icons/righthand.png"
+spellhand = "icons/spellhand.png"
+standing = "icons/standing.png"
+kneeling = "icons/kneeling.png"
+sitting = "icons/sitting.png"
+prone = "icons/prone.png"
+joined = "icons/joined.png"
+dead = "icons/dead.png"
+stunned = "icons/stunned.png"
+bleeding = "icons/bleeding.png"
+webbed = "icons/webbed.png"
+poisoned = "icons/poisoned.png"
+diseased = "icons/diseased.png"
+# Combat icon buttons (image name -> sprite; case-insensitive).
+swordbtn = "icons/swordbtn.png"
+shieldbtn = "icons/shieldbtn.png"
+noswordbtn = "icons/noswordbtn.png"
+noshieldbtn = "icons/noshieldbtn.png"
+# Title-bar close button sprite.
+titlebar_close = "icons/titlebar_close.png"
+
+[compass]
+rose = "compass/rose.png"
+n = "compass/n.png"
+s = "compass/s.png"
+e = "compass/e.png"
+w = "compass/w.png"
+ne = "compass/ne.png"
+nw = "compass/nw.png"
+se = "compass/se.png"
+sw = "compass/sw.png"
+up = "compass/up.png"
+down = "compass/down.png"
+out = "compass/out.png"
+
+# ---- Interactive dialog-panel controls ------------------------------------
+# Nine-slice button background (1px bevel border, dark fill). state variants:
+# button / button.hover / button.pressed.
+[controls.button]
+image = "controls/button.png"
+slice = [2.0, 2.0, 2.0, 2.0]
+scale = 1.0
+
+[controls."button.hover"]
+image = "controls/button_hover.png"
+slice = [2.0, 2.0, 2.0, 2.0]
+scale = 1.0
+
+# Progress bars stay unskinned (theme-colored fills) — matching storm. The
+# old button-bevel trough framed them oddly; the plain bar reads better.
+
+# Tabs: bevel like a button; the active tab uses the brighter variant so the
+# selected tab reads as lit.
+[controls.tab]
+image = "controls/button.png"
+slice = [2.0, 2.0, 2.0, 2.0]
+scale = 1.0
+
+[controls."tab.active"]
+image = "controls/button_hover.png"
+slice = [2.0, 2.0, 2.0, 2.0]
+scale = 1.0
+
+# Title bar sprite band (nine-slice). The close button is [icons] titlebar_close.
+# Slice = [top, right, bottom, left] matched to titlebar.png (194x20):
+#   top=13  -> rows 0-12 are the solid top band; only the notch (rows 13-19,
+#              the transparent cutout that reveals the window mesh) stretches.
+#   right=38 -> cols 156-193 are the solid caption/close backing; keep it fixed
+#              so the notch never stretches over the >> / close area (the mesh
+#              bleed by the X). bottom=0 -> the notch runs to the bottom edge;
+#   left=2  -> the 2px opaque left border.
+[controls.titlebar]
+image = "frames/titlebar.png"
+slice = [13.0, 38.0, 0.0, 2.0]
+scale = 1.0
+
+[injury_doll]
+base = "doll/base.png"
+
+[injury_doll.dots]
+wound_color = "#e02020"
+scar_color = "#f0a020"
+opacity = 0.9
+diameter = 0.06
+
+[injury_doll.anchors]
+abdomen = [0.4829, 0.3501]
+back = [0.1354, 0.8161]
+chest = [0.4709, 0.2336]
+head = [0.4649, 0.0496]
+leftarm = [0.6686, 0.3041]
+lefteye = [0.8423, 0.0435]
+lefthand = [0.7285, 0.5217]
+leftleg = [0.6027, 0.6597]
+neck = [0.4649, 0.1447]
+nsys = [0.8363, 0.8191]
+rightarm = [0.2672, 0.3041]
+righteye = [0.1175, 0.0435]
+righthand = [0.2313, 0.5187]
+rightleg = [0.3331, 0.6658]

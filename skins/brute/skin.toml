@@ -1,0 +1,113 @@
+# Brute - storm-family frames + the armored-knight injury doll. Flat/heavy:
+# no mesh (theme-colored grounds), muted steel accent.
+[meta]
+name = "Brute"
+description = "Curated from Wrayth's Brute skin"
+
+[ui]
+window_bg = "#0c0e12"
+panel_bg = "#14171c"
+menu_bg = "#0c0e12"
+button_bg = "#1a1e24"
+button_hover = "#262b33"
+text = "#c4ccd6"
+accent = "#7c98b8"
+border = "#2a323c"
+titlebar_text = "#1a2028"
+# Combat/dialog button labels sit on the light SILVER button art, so dark.
+button_text = "#1a2028"
+
+[window.default.border]
+image = "frames/client.png"
+slice = [3.0, 3.0, 3.0, 3.0]
+scale = 1.0
+
+[controls.titlebar]
+image = "frames/panel.png"
+slice = [13.0, 50.0, 0.0, 8.0]
+scale = 1.0
+
+[edges.right]
+strip = "frames/vertical.png"
+tile = true
+ornament = "frames/flourish.png"
+anchor = "start"
+thickness = 3.0
+scale = 1.0
+
+[controls.button]
+image = "controls/button.png"
+slice = [4.0, 6.0, 4.0, 6.0]
+scale = 1.0
+
+[controls."button.hover"]
+image = "controls/button_alt.png"
+slice = [4.0, 6.0, 4.0, 6.0]
+scale = 1.0
+
+[controls.dropdown]
+image = "controls/dropdown.png"
+slice = [3.0, 3.0, 3.0, 3.0]
+scale = 1.0
+
+[icons]
+lefthand = "icons/lefthand.png"
+righthand = "icons/righthand.png"
+spellhand = "icons/spellhand.png"
+swordbtn = "icons/swordbtn.png"
+noswordbtn = "icons/noswordbtn.png"
+shieldbtn = "icons/shieldbtn.png"
+noshieldbtn = "icons/noshieldbtn.png"
+standing = "icons/standing.png"
+kneeling = "icons/kneeling.png"
+sitting = "icons/sitting.png"
+prone = "icons/prone.png"
+dead = "icons/dead.png"
+poisoned = "icons/poisoned.png"
+diseased = "icons/diseased.png"
+bleeding = "icons/bleeding.png"
+stunned = "icons/stunned.png"
+
+[compass]
+rose = "compass/rose.png"
+n = "compass/n.png"
+ne = "compass/ne.png"
+e = "compass/e.png"
+se = "compass/se.png"
+s = "compass/s.png"
+sw = "compass/sw.png"
+w = "compass/w.png"
+nw = "compass/nw.png"
+up = "compass/up.png"
+down = "compass/down.png"
+out = "compass/out.png"
+
+[injury_doll]
+base = "doll/base.png"
+
+[injury_doll.dots]
+wound_color = "#e02020"
+scar_color = "#f08040"
+opacity = 0.9
+diameter = 0.062
+
+[injury_doll.nsys]
+injury1 = "doll/nerves1.png"
+injury2 = "doll/nerves2.png"
+injury3 = "doll/nerves3.png"
+
+[injury_doll.anchors]
+abdomen = [0.5967, 0.439]
+back = [0.1703, 0.7793]
+chest = [0.58, 0.3071]
+head = [0.5549, 0.0711]
+leftarm = [0.7723, 0.2428]
+lefteye = [0.7347, 0.0558]
+lefthand = [0.8267, 0.5493]
+leftleg = [0.6385, 0.7057]
+neck = [0.534, 0.209]
+nsys = [0.789, 0.7425]
+rightarm = [0.3208, 0.2366]
+righteye = [0.3459, 0.0496]
+righthand = [0.2372, 0.5524]
+rightleg = [0.3877, 0.7517]
