@@ -37,6 +37,16 @@ set explicitly, which always forces a re-key.
 | `statusicons/` | image or zip → `<set>/<role>.png` | threshold 30 | role vocabulary: 13 glyph names (see template) |
 | `hands/` | image or zip → `<set>/<role>.png` | threshold 30 | role vocabulary: lefthand, righthand, spellhand |
 
+**Manifest key semantics** (the client contract): `type` — and its copy
+`vellum.category` — is a singular *kind* noun (`hand`, `compass`, `frame`)
+for type dispatch. `vellum.pool` is a *place*: the shared-image-pool folder
+name, guaranteed to match the on-disk category directory and URL path
+segment (`hands/`, `compass/`). Use `pool` for anything path-shaped,
+`type`/`category` for kind dispatch. `vellum.set` equals the set folder
+name, constrained to `[a-z0-9_-]`. Names are unique within a category
+(pipeline-enforced); reuse across categories is intentional — same name
+means same visual theme.
+
 Set categories publish one folder per set with bare `<role>.png` pieces
 inside and a single shared `meta.toml`. Submissions accept a single bare
 image (role picked via form dropdown) or a zip. Zip entries named
