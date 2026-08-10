@@ -60,12 +60,12 @@ CATEGORIES = {
   'layouts' => { type: 'layout',  pack: false, ext: nil },
   # Paper dolls are individual PNG files -> listed as-is.
   'dolls'   => { type: 'doll',    pack: false, ext: nil, pool: 'dolls' },
-  # Status glyph pool: individual PNGs named <set>_<glyph>.png.
-  'statusicons' => { type: 'statusicon', pack: false, ext: nil, pool: 'statusicons', set_piece: true },
-  # Hand icons (left/right/spell) for the hands widget: <set>_<hand>.png.
-  'hands'   => { type: 'hand',    pack: false, ext: nil, pool: 'hands', set_piece: true },
-  # Compass element pool: individual PNGs named <set>_<role>.png.
-  'compass' => { type: 'compass', pack: false, ext: nil, pool: 'compass', set_piece: true },
+  # Status glyph sets: one folder per set, <glyph>.png inside + meta.toml.
+  'statusicons' => { type: 'statusicon', pack: false, ext: nil, pool: 'statusicons', sets: true },
+  # Hand icon sets: one folder per set, <hand>.png inside + meta.toml.
+  'hands'   => { type: 'hand',    pack: false, ext: nil, pool: 'hands', sets: true },
+  # Compass sets: one folder per set, <role>.png inside + meta.toml.
+  'compass' => { type: 'compass', pack: false, ext: nil, pool: 'compass', sets: true },
   # Window frames (nine-slice): single PNGs, slice/scale in sidecar toml.
   'frames'  => { type: 'frame',   pack: false, ext: nil, pool: 'frames' },
   # Window background textures: opaque single PNGs.
@@ -263,6 +263,35 @@ def build_category(root, category, config, base_url)
       # The generated bundle is written beside the source so Pages serves it.
       File.binwrite(File.join(cat_dir, file_name), bytes)
     end
+  elsif config[:sets]
+    # Set categories: each subdirectory is one set. Pieces are bare
+    # <piece>.png files inside; one meta.toml per set supplies the shared
+    # metadata (same title/author on every member — the client reads set
+    # metadata off the first member it sees, and groups by vellum.set).
+    Dir.children(cat_dir).sort.each do |set|
+      set_dir = File.join(cat_dir, set)
+      next unless File.directory?(set_dir)
+      next unless set.match?(/\A[a-z0-9_-]+\z/)
+
+      meta = read_meta_toml(File.join(set_dir, 'meta.toml'))
+      Dir.children(set_dir).sort.each do |piece|
+        next if IGNORED.include?(piece) || piece.end_with?('.json', '.toml')
+
+        path = File.join(set_dir, piece)
+        next unless File.file?(path)
+
+        entry = {
+          'file'        => "/#{set}/#{piece}",
+          'type'        => config[:type],
+          'md5'         => digest_b64(File.binread(path)),
+          'last_commit' => last_commit(path)
+        }
+        vb = vellum_block(meta, config[:type], config[:pool]) || {}
+        vb['set'] = set
+        entry['vellum'] = vb
+        available << entry
+      end
+    end
   else
     # Single-file assets: list each file as-is. A sidecar <name>.toml (written
     # by the submission pipeline) supplies gallery/render metadata.
@@ -282,15 +311,6 @@ def build_category(root, category, config, base_url)
         'last_commit' => last_commit(path)
       }
       vb = vellum_block(meta, config[:type], config[:pool])
-      # Pool assets following the <set>_<piece> convention publish their
-      # set name so the client groups members without parsing filenames.
-      # Pieces never contain underscores, set names may — so the set is
-      # everything before the LAST underscore. Directory-safe values only;
-      # anything else is omitted rather than published broken.
-      if config[:set_piece] && vb
-        set = File.basename(name, '.*').rpartition('_').first
-        vb['set'] = set if set.match?(/\A[a-z0-9_-]+\z/)
-      end
       entry['vellum'] = vb if vb
       available << entry
     end

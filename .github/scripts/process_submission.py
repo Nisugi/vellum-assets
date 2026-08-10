@@ -366,17 +366,14 @@ def main() -> int:
         written.append((f"{category}/{name}.png", note))
     else:
         data = download(urls[0])
-        # out_stem -> (Image, display title)
+        # (set, piece) -> Image; published as <category>/<set>/<piece>.png
         outputs = {}
 
-        def add_output(stem_prefix, role, img):
-            out = f"{stem_prefix}_{role}"
-            if out in outputs:
-                raise Reject(f"Two files would both publish as `{out}.png`.")
-            # Every member of a set carries the SAME title — the client
-            # reads set metadata off the first member it sees.
-            title = fields["title"] if stem_prefix == name else stem_prefix
-            outputs[out] = (img, title)
+        def add_output(set_name, role, img):
+            if (set_name, role) in outputs:
+                raise Reject(f"Two files would both publish as "
+                             f"`{set_name}/{role}.png`.")
+            outputs[(set_name, role)] = img
 
         if data[:4] == b"PK\x03\x04":
             zf = zipfile.ZipFile(io.BytesIO(data))
@@ -423,17 +420,23 @@ def main() -> int:
             img = decode_image(data, name)
             add_output(prefix, role, process_image(img, cfg, name))
 
-        conflicts = [f"{out}.png" for out in outputs
-                     if (cat_dir / f"{out}.png").exists()]
+        conflicts = [f"{s}/{r}.png" for (s, r) in outputs
+                     if (cat_dir / s / f"{r}.png").exists()]
         if conflicts:
-            raise Reject("These names are already taken in "
+            raise Reject("These pieces already exist in "
                          f"`{category}/`: {', '.join(sorted(conflicts))} — "
-                         "rename and edit the issue.")
-        for out, (img, title) in sorted(outputs.items()):
-            img.save(cat_dir / f"{out}.png")
-            write_sidecar(cat_dir / f"{out}.toml",
-                          dict(fields, title=title), extra)
-            written.append((f"{category}/{out}.png",
+                         "rename the set and edit the issue.")
+        for (set_name, role), img in sorted(outputs.items()):
+            set_dir = cat_dir / set_name
+            set_dir.mkdir(exist_ok=True)
+            img.save(set_dir / f"{role}.png")
+            # One meta.toml per set, shared by every member. Adding a piece
+            # to an existing set keeps that set's metadata untouched.
+            meta_path = set_dir / "meta.toml"
+            if not meta_path.exists():
+                title = fields["title"] if set_name == name else set_name
+                write_sidecar(meta_path, dict(fields, title=title), extra)
+            written.append((f"{category}/{set_name}/{role}.png",
                             f"{img.width}x{img.height}"))
 
     summary = [

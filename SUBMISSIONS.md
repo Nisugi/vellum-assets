@@ -33,14 +33,17 @@ set explicitly, which always forces a re-key.
 | `icons/` | single sheet | none (opaque) | cell size |
 | `frames/` | single image | threshold 12 + center seed | cap size auto-measured from alpha+color profiles; form field overrides |
 | `backgrounds/` | single image | none — must be opaque | — |
-| `compass/` | image or zip → `<prefix>_<role>.png` | threshold 30 | role vocabulary: rose, n, ne, e, se, s, sw, w, nw, up, down, out |
-| `statusicons/` | image or zip → `<prefix>_<role>.png` | threshold 30 | role vocabulary: 13 glyph names (see template) |
-| `hands/` | image or zip → `<prefix>_<role>.png` | threshold 30 | role vocabulary: lefthand, righthand, spellhand |
+| `compass/` | image or zip → `<set>/<role>.png` | threshold 30 | role vocabulary: rose, n, ne, e, se, s, sw, w, nw, up, down, out |
+| `statusicons/` | image or zip → `<set>/<role>.png` | threshold 30 | role vocabulary: 13 glyph names (see template) |
+| `hands/` | image or zip → `<set>/<role>.png` | threshold 30 | role vocabulary: lefthand, righthand, spellhand |
 
-Set categories accept a single bare image (role picked via form dropdown) or
-a zip. Zip entries named `<role>.png` take the form's set name as prefix;
-entries named `<anything>_<role>.png` keep their own prefix, so one zip can
-carry many differently-named assets of the same role.
+Set categories publish one folder per set with bare `<role>.png` pieces
+inside and a single shared `meta.toml`. Submissions accept a single bare
+image (role picked via form dropdown) or a zip. Zip entries named
+`<role>.png` land in the set named by the form; entries named
+`<anything>_<role>.png` land in a set named by their own prefix, so one zip
+can carry pieces for many sets. Adding a piece to an existing set is
+allowed and leaves that set's metadata untouched.
 
 Deliberately deferred: injury-doll severity overlays (84 images per doll —
 see GEMINI_PROMPTS.md), and a Discord bot entry point that would open PRs
