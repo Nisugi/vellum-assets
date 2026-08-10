@@ -373,7 +373,10 @@ def main() -> int:
             out = f"{stem_prefix}_{role}"
             if out in outputs:
                 raise Reject(f"Two files would both publish as `{out}.png`.")
-            outputs[out] = (img, f"{stem_prefix} ({role})")
+            # Every member of a set carries the SAME title — the client
+            # reads set metadata off the first member it sees.
+            title = fields["title"] if stem_prefix == name else stem_prefix
+            outputs[out] = (img, title)
 
         if data[:4] == b"PK\x03\x04":
             zf = zipfile.ZipFile(io.BytesIO(data))
@@ -412,8 +415,13 @@ def main() -> int:
                     "For a single-image submission, pick the file's role in "
                     "the **Role** dropdown (or attach a .zip of "
                     "`<anything>_<role>.png` files instead).")
+            # A set name that already ends in the role would double it
+            # (x_spellhand + spellhand -> x_spellhand_spellhand) — strip it.
+            prefix = name
+            if prefix.endswith(f"_{role}") and len(prefix) > len(role) + 1:
+                prefix = prefix[:-(len(role) + 1)]
             img = decode_image(data, name)
-            add_output(name, role, process_image(img, cfg, name))
+            add_output(prefix, role, process_image(img, cfg, name))
 
         conflicts = [f"{out}.png" for out in outputs
                      if (cat_dir / f"{out}.png").exists()]

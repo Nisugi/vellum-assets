@@ -61,11 +61,11 @@ CATEGORIES = {
   # Paper dolls are individual PNG files -> listed as-is.
   'dolls'   => { type: 'doll',    pack: false, ext: nil, pool: 'dolls' },
   # Status glyph pool: individual PNGs named <set>_<glyph>.png.
-  'statusicons' => { type: 'statusicon', pack: false, ext: nil, pool: 'statusicons' },
+  'statusicons' => { type: 'statusicon', pack: false, ext: nil, pool: 'statusicons', set_piece: true },
   # Hand icons (left/right/spell) for the hands widget: <set>_<hand>.png.
-  'hands'   => { type: 'hand',    pack: false, ext: nil, pool: 'hands' },
+  'hands'   => { type: 'hand',    pack: false, ext: nil, pool: 'hands', set_piece: true },
   # Compass element pool: individual PNGs named <set>_<role>.png.
-  'compass' => { type: 'compass', pack: false, ext: nil, pool: 'compass' },
+  'compass' => { type: 'compass', pack: false, ext: nil, pool: 'compass', set_piece: true },
   # Window frames (nine-slice): single PNGs, slice/scale in sidecar toml.
   'frames'  => { type: 'frame',   pack: false, ext: nil, pool: 'frames' },
   # Window background textures: opaque single PNGs.
@@ -282,6 +282,15 @@ def build_category(root, category, config, base_url)
         'last_commit' => last_commit(path)
       }
       vb = vellum_block(meta, config[:type], config[:pool])
+      # Pool assets following the <set>_<piece> convention publish their
+      # set name so the client groups members without parsing filenames.
+      # Pieces never contain underscores, set names may — so the set is
+      # everything before the LAST underscore. Directory-safe values only;
+      # anything else is omitted rather than published broken.
+      if config[:set_piece] && vb
+        set = File.basename(name, '.*').rpartition('_').first
+        vb['set'] = set if set.match?(/\A[a-z0-9_-]+\z/)
+      end
       entry['vellum'] = vb if vb
       available << entry
     end
